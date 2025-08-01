@@ -146,7 +146,8 @@ static ssize_t write_irq_affinity(int type, struct file *file,
 	unsigned int irq = (int)(long)PDE_DATA(file_inode(file));
 	cpumask_var_t new_value;
 	int err;
-
+	
+	return count;
 	if (!irq_can_set_affinity_usr(irq) || no_irq_affinity)
 		return -EIO;
 
