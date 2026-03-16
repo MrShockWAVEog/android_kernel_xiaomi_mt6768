@@ -17,6 +17,7 @@
 #include <linux/pm_qos.h>
 #include <linux/jiffies.h>
 #include <linux/tick.h>
+#include <linux/cpu.h>
 
 #include <asm/io.h>
 #include <linux/uaccess.h>
@@ -68,10 +69,16 @@ static int ladder_select_state(struct cpuidle_driver *drv,
 			       struct cpuidle_device *dev, bool *dummy)
 {
 	struct ladder_device *ldev = this_cpu_ptr(&ladder_devices);
+	struct device *device = get_cpu_device(dev->cpu);
 	struct ladder_device_state *last_state;
 	int last_residency, last_idx = ldev->last_state_idx;
 	int first_idx = drv->states[0].flags & CPUIDLE_FLAG_POLLING ? 1 : 0;
 	int latency_req = pm_qos_request(PM_QOS_CPU_DMA_LATENCY);
+	int resume_latency = dev_pm_qos_raw_read_value(device);
+
+	if (resume_latency < latency_req &&
+	    resume_latency != PM_QOS_RESUME_LATENCY_NO_CONSTRAINT)
+		latency_req = resume_latency;
 
 	/* Special case when user has set very strict latency requirement */
 	if (unlikely(latency_req == 0)) {
@@ -85,7 +92,6 @@ static int ladder_select_state(struct cpuidle_driver *drv,
 
 	/* consider promotion */
 	if (last_idx < drv->state_count - 1 &&
-	    !drv->states[last_idx + 1].disabled &&
 	    !dev->states_usage[last_idx + 1].disable &&
 	    last_residency > last_state->threshold.promotion_time &&
 	    drv->states[last_idx + 1].exit_latency <= latency_req) {
@@ -99,8 +105,7 @@ static int ladder_select_state(struct cpuidle_driver *drv,
 
 	/* consider demotion */
 	if (last_idx > first_idx &&
-	    (drv->states[last_idx].disabled ||
-	    dev->states_usage[last_idx].disable ||
+	    (dev->states_usage[last_idx].disable ||
 	    drv->states[last_idx].exit_latency > latency_req)) {
 		int i;
 

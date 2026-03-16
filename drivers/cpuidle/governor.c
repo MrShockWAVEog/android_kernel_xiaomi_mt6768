@@ -8,8 +8,10 @@
  * This code is licenced under the GPL.
  */
 
-#include <linux/mutex.h>
+#include <linux/cpu.h>
 #include <linux/cpuidle.h>
+#include <linux/mutex.h>
+#include <linux/pm_qos.h>
 
 #include "cpuidle.h"
 
@@ -36,13 +38,14 @@ static struct cpuidle_governor * __cpuidle_find_governor(const char *str)
 /**
  * cpuidle_switch_governor - changes the governor
  * @gov: the new target governor
- *
- * NOTE: "gov" can be NULL to specify disabled
  * Must be called with cpuidle_lock acquired.
  */
 int cpuidle_switch_governor(struct cpuidle_governor *gov)
 {
 	struct cpuidle_device *dev;
+
+	if (!gov)
+		return -EINVAL;
 
 	if (gov == cpuidle_curr_governor)
 		return 0;
@@ -56,12 +59,11 @@ int cpuidle_switch_governor(struct cpuidle_governor *gov)
 
 	cpuidle_curr_governor = gov;
 
-	if (gov) {
-		list_for_each_entry(dev, &cpuidle_detected_devices, device_list)
-			cpuidle_enable_device(dev);
-		cpuidle_install_idle_handler();
-		printk(KERN_INFO "cpuidle: using governor %s\n", gov->name);
-	}
+	list_for_each_entry(dev, &cpuidle_detected_devices, device_list)
+		cpuidle_enable_device(dev);
+
+	cpuidle_install_idle_handler();
+	pr_info("cpuidle: using governor %s\n", gov->name);
 
 	return 0;
 }
@@ -92,3 +94,18 @@ int cpuidle_register_governor(struct cpuidle_governor *gov)
 
 	return ret;
 }
+EXPORT_SYMBOL_GPL(cpuidle_register_governor);
+
+/**
+ * cpuidle_governor_latency_req - Compute a latency constraint for CPU
+ * @cpu: Target CPU
+ */
+int cpuidle_governor_latency_req(unsigned int cpu)
+{
+	int global_req = pm_qos_request_for_cpu(PM_QOS_CPU_DMA_LATENCY, cpu);
+	struct device *device = get_cpu_device(cpu);
+	int device_req = dev_pm_qos_raw_read_value(device);
+
+	return device_req < global_req ? device_req : global_req;
+}
+EXPORT_SYMBOL_GPL(cpuidle_governor_latency_req);
