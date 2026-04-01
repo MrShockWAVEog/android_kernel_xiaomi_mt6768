@@ -17,7 +17,7 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/cmdq/v2 \
              -I$(srctree)/drivers/misc/mediatek/m4u/$(MTK_PLATFORM)
 
 # Enable MET
-ccflags-y += -DMET_USER_EVENT_SUPPORT
+ccflags-$(CONFIG_MTK_MET) += -DMET_USER_EVENT_SUPPORT
 
 ifeq ($(CONFIG_MTK_CMDQ_TAB), y)
 ccflags-y += -DCMDQ_USE_LEGACY

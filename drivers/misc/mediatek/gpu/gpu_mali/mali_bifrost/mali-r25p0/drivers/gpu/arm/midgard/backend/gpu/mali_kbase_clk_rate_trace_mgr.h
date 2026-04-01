@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *
- * (C) COPYRIGHT 2020 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2020-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,17 +17,15 @@
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
  *
- * SPDX-License-Identifier: GPL-2.0
- *
  */
 
 #ifndef _KBASE_CLK_RATE_TRACE_MGR_
 #define _KBASE_CLK_RATE_TRACE_MGR_
 
-/** The index of top clock domain in kbase_clk_rate_trace_manager:clks. */
+/* The index of top clock domain in kbase_clk_rate_trace_manager:clks. */
 #define KBASE_CLOCK_DOMAIN_TOP (0)
 
-/** The index of shader-cores clock domain in
+/* The index of shader-cores clock domain in
  * kbase_clk_rate_trace_manager:clks.
  */
 #define KBASE_CLOCK_DOMAIN_SHADER_CORES (1)
@@ -91,9 +90,9 @@ void kbase_clk_rate_trace_manager_gpu_idle(struct kbase_device *kbdev);
  *
  * kbase_clk_rate_trace_manager:lock must be held by the caller.
  */
-static inline void kbase_clk_rate_trace_manager_subscribe_no_lock(
-	struct kbase_clk_rate_trace_manager *clk_rtm,
-	struct kbase_clk_rate_listener *listener)
+static inline void
+kbase_clk_rate_trace_manager_subscribe_no_lock(struct kbase_clk_rate_trace_manager *clk_rtm,
+					       struct kbase_clk_rate_listener *listener)
 {
 	lockdep_assert_held(&clk_rtm->lock);
 	list_add(&listener->node, &clk_rtm->listeners);
@@ -105,15 +104,14 @@ static inline void kbase_clk_rate_trace_manager_subscribe_no_lock(
  * @clk_rtm:    Clock rate manager instance.
  * @listener:   Listener handle
  */
-static inline void kbase_clk_rate_trace_manager_subscribe(
-	struct kbase_clk_rate_trace_manager *clk_rtm,
-	struct kbase_clk_rate_listener *listener)
+static inline void
+kbase_clk_rate_trace_manager_subscribe(struct kbase_clk_rate_trace_manager *clk_rtm,
+				       struct kbase_clk_rate_listener *listener)
 {
 	unsigned long flags;
 
 	spin_lock_irqsave(&clk_rtm->lock, flags);
-	kbase_clk_rate_trace_manager_subscribe_no_lock(
-		clk_rtm, listener);
+	kbase_clk_rate_trace_manager_subscribe_no_lock(clk_rtm, listener);
 	spin_unlock_irqrestore(&clk_rtm->lock, flags);
 }
 
@@ -123,9 +121,9 @@ static inline void kbase_clk_rate_trace_manager_subscribe(
  * @clk_rtm:    Clock rate manager instance.
  * @listener:   Listener handle
  */
-static inline void kbase_clk_rate_trace_manager_unsubscribe(
-	struct kbase_clk_rate_trace_manager *clk_rtm,
-	struct kbase_clk_rate_listener *listener)
+static inline void
+kbase_clk_rate_trace_manager_unsubscribe(struct kbase_clk_rate_trace_manager *clk_rtm,
+					 struct kbase_clk_rate_listener *listener)
 {
 	unsigned long flags;
 
@@ -134,5 +132,19 @@ static inline void kbase_clk_rate_trace_manager_unsubscribe(
 	spin_unlock_irqrestore(&clk_rtm->lock, flags);
 }
 
-#endif /* _KBASE_CLK_RATE_TRACE_MGR_ */
+/**
+ * kbase_clk_rate_trace_manager_notify_all() - Notify all clock \
+ *                                             rate listeners.
+ *
+ * @clk_rtm:     Clock rate manager instance.
+ * @clock_index:   Clock index.
+ * @new_rate:    New clock frequency(Hz)
+ *
+ * kbase_clk_rate_trace_manager:lock must be locked.
+ * This function is exported to be used by clock rate trace test
+ * portal.
+ */
+void kbase_clk_rate_trace_manager_notify_all(struct kbase_clk_rate_trace_manager *clk_rtm,
+					     u32 clock_index, unsigned long new_rate);
 
+#endif /* _KBASE_CLK_RATE_TRACE_MGR_ */

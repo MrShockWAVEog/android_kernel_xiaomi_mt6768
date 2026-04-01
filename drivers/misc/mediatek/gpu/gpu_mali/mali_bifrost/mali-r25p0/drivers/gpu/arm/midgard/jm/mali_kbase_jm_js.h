@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *
- * (C) COPYRIGHT 2020 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2020-2024 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
- *
- * SPDX-License-Identifier: GPL-2.0
  *
  */
 
@@ -28,20 +27,25 @@
 #ifndef _KBASE_JM_JS_H_
 #define _KBASE_JM_JS_H_
 
-#include <linux/pm_qos.h>
 #include "mali_kbase_js_ctx_attr.h"
+
+#define JS_MAX_RUNNING_JOBS 8
 
 /**
  * kbasep_js_devdata_init - Initialize the Job Scheduler
+ * @kbdev: The kbase_device to operate on
  *
  * The struct kbasep_js_device_data sub-structure of kbdev must be zero
  * initialized before passing to the kbasep_js_devdata_init() function. This is
  * to give efficient error path code.
+ *
+ * Return: 0 on success, error code otherwise.
  */
-int kbasep_js_devdata_init(struct kbase_device * const kbdev);
+int kbasep_js_devdata_init(struct kbase_device *const kbdev);
 
 /**
  * kbasep_js_devdata_halt - Halt the Job Scheduler.
+ * @kbdev: The kbase_device to operate on
  *
  * It is safe to call this on kbdev even if it the kbasep_js_device_data
  * sub-structure was never initialized/failed initialization, to give efficient
@@ -59,6 +63,7 @@ void kbasep_js_devdata_halt(struct kbase_device *kbdev);
 
 /**
  * kbasep_js_devdata_term - Terminate the Job Scheduler
+ * @kbdev: The kbase_device to operate on
  *
  * It is safe to call this on kbdev even if it the kbasep_js_device_data
  * sub-structure was never initialized/failed initialization, to give efficient
@@ -76,6 +81,7 @@ void kbasep_js_devdata_term(struct kbase_device *kbdev);
 /**
  * kbasep_js_kctx_init - Initialize the Scheduling Component of a
  *                       struct kbase_context on the Job Scheduler.
+ * @kctx:  The kbase_context to operate on
  *
  * This effectively registers a struct kbase_context with a Job Scheduler.
  *
@@ -84,12 +90,15 @@ void kbasep_js_devdata_term(struct kbase_device *kbdev);
  *
  * The struct kbase_context must be zero initialized before passing to the
  * kbase_js_init() function. This is to give efficient error path code.
+ *
+ * Return: 0 on success, error code otherwise.
  */
 int kbasep_js_kctx_init(struct kbase_context *const kctx);
 
 /**
  * kbasep_js_kctx_term - Terminate the Scheduling Component of a
  *                       struct kbase_context on the Job Scheduler
+ * @kctx:  The kbase_context to operate on
  *
  * This effectively de-registers a struct kbase_context from its Job Scheduler
  *
@@ -105,10 +114,57 @@ int kbasep_js_kctx_init(struct kbase_context *const kctx);
  */
 void kbasep_js_kctx_term(struct kbase_context *kctx);
 
+/* kbase_jsctx_slot_prio_blocked_set - Set a context as being blocked for a job
+ *                                     slot at and below a given priority level
+ * @kctx: The kbase_context
+ * @js: The job slot
+ * @sched_prio: The priority levels that the context is blocked at for @js (all
+ *              priority levels at this level and below will be blocked)
+ *
+ * To preserve ordering and dependencies of atoms on soft-stopping (both within
+ * an between priority levels), a context must be marked as blocked for that
+ * atom's job slot, for all priority levels at or below the atom's priority.
+ *
+ * This must only be called due to an atom that was pulled from the context,
+ * otherwise there will be no way of unblocking the context when the atom is
+ * completed/unpulled.
+ *
+ * Atoms of higher priority might still be able to be pulled from the context
+ * on @js. This helps with starting a high priority atom as soon as possible.
+ */
+static inline void kbase_jsctx_slot_prio_blocked_set(struct kbase_context *kctx, unsigned int js,
+						     int sched_prio)
+{
+	struct kbase_jsctx_slot_tracking *slot_tracking = &kctx->slot_tracking[js];
+
+	lockdep_assert_held(&kctx->kbdev->hwaccess_lock);
+	WARN(!slot_tracking->atoms_pulled_pri[sched_prio],
+	     "When marking slot %u as blocked for priority %d on a kctx, no atoms were pulled - the slot cannot become unblocked",
+	     js, sched_prio);
+
+	slot_tracking->blocked |= ((kbase_js_prio_bitmap_t)1) << sched_prio;
+	KBASE_KTRACE_ADD_JM_SLOT_INFO(kctx->kbdev, JS_SLOT_PRIO_BLOCKED, kctx, NULL, 0, js,
+				      (unsigned int)sched_prio);
+}
+
+/* kbase_jsctx_atoms_pulled - Return number of atoms pulled on a context
+ * @kctx: The kbase_context
+ *
+ * Having atoms pulled indicates the context is not idle.
+ *
+ * Return: the number of atoms pulled on @kctx
+ */
+static inline int kbase_jsctx_atoms_pulled(struct kbase_context *kctx)
+{
+	return atomic_read(&kctx->atoms_pulled_all_slots);
+}
+
 /**
  * kbasep_js_add_job - Add a job chain to the Job Scheduler,
  *                     and take necessary actions to
  *                     schedule the context/run the job.
+ * @kctx:  The kbase_context to operate on
+ * @atom: Atom to add
  *
  * This atomically does the following:
  * * Update the numbers of jobs information
@@ -152,6 +208,9 @@ bool kbasep_js_add_job(struct kbase_context *kctx, struct kbase_jd_atom *atom);
 /**
  * kbasep_js_remove_job - Remove a job chain from the Job Scheduler,
  *                        except for its 'retained state'.
+ * @kbdev: The kbase_device to operate on
+ * @kctx:  The kbase_context to operate on
+ * @atom: Atom to remove
  *
  * Completely removing a job requires several calls:
  * * kbasep_js_copy_atom_retained_state(), to capture the 'retained state' of
@@ -179,13 +238,16 @@ bool kbasep_js_add_job(struct kbase_context *kctx, struct kbase_jd_atom *atom);
  * * it must hold kbasep_js_kctx_info::ctx::jsctx_mutex.
  *
  */
-void kbasep_js_remove_job(struct kbase_device *kbdev,
-		struct kbase_context *kctx, struct kbase_jd_atom *atom);
+void kbasep_js_remove_job(struct kbase_device *kbdev, struct kbase_context *kctx,
+			  struct kbase_jd_atom *atom);
 
 /**
  * kbasep_js_remove_cancelled_job - Completely remove a job chain from the
  *                                  Job Scheduler, in the case
  *                                  where the job chain was cancelled.
+ * @kbdev: The kbase_device to operate on
+ * @kctx:  The kbase_context to operate on
+ * @katom: Atom to remove
  *
  * This is a variant of kbasep_js_remove_job() that takes care of removing all
  * of the retained state too. This is generally useful for cancelled atoms,
@@ -208,14 +270,16 @@ void kbasep_js_remove_job(struct kbase_device *kbdev,
  * should call kbase_js_sched_all() to try to run more jobs and
  * false otherwise.
  */
-bool kbasep_js_remove_cancelled_job(struct kbase_device *kbdev,
-		struct kbase_context *kctx,
-		struct kbase_jd_atom *katom);
+bool kbasep_js_remove_cancelled_job(struct kbase_device *kbdev, struct kbase_context *kctx,
+				    struct kbase_jd_atom *katom);
 
 /**
  * kbasep_js_runpool_requeue_or_kill_ctx - Handling the requeuing/killing of a
  *                                         context that was evicted from the
  *                                         policy queue or runpool.
+ * @kbdev: The kbase_device to operate on
+ * @kctx:  The kbase_context to operate on
+ * @has_pm_ref: tells whether to release Power Manager active reference
  *
  * This should be used whenever handing off a context that has been evicted
  * from the policy queue or the runpool:
@@ -237,12 +301,14 @@ bool kbasep_js_remove_cancelled_job(struct kbase_device *kbdev,
  * * it must not hold kbasep_jd_device_data::queue_mutex (as this will be
  * obtained internally)
  */
-void kbasep_js_runpool_requeue_or_kill_ctx(struct kbase_device *kbdev,
-		struct kbase_context *kctx, bool has_pm_ref);
+void kbasep_js_runpool_requeue_or_kill_ctx(struct kbase_device *kbdev, struct kbase_context *kctx,
+					   bool has_pm_ref);
 
 /**
  * kbasep_js_runpool_release_ctx - Release a refcount of a context being busy,
  *                                 allowing it to be scheduled out.
+ * @kbdev: The kbase_device to operate on
+ * @kctx:  The kbase_context to operate on
  *
  * When the refcount reaches zero and the context might be scheduled out
  * (depending on whether the Scheduling Policy has deemed it so, or if it has
@@ -290,13 +356,16 @@ void kbasep_js_runpool_requeue_or_kill_ctx(struct kbase_device *kbdev,
  * obtained internally)
  *
  */
-void kbasep_js_runpool_release_ctx(struct kbase_device *kbdev,
-		struct kbase_context *kctx);
+void kbasep_js_runpool_release_ctx(struct kbase_device *kbdev, struct kbase_context *kctx);
 
 /**
- * kbasep_js_runpool_release_ctx_and_katom_retained_state -  Variant of
+ * kbasep_js_runpool_release_ctx_and_katom_retained_state - Variant of
  * kbasep_js_runpool_release_ctx() that handles additional
  * actions from completing an atom.
+ *
+ * @kbdev:                KBase device
+ * @kctx:                 KBase context
+ * @katom_retained_state: Retained state from the atom
  *
  * This is usually called as part of completing an atom and releasing the
  * refcount on the context held by the atom.
@@ -311,22 +380,27 @@ void kbasep_js_runpool_release_ctx(struct kbase_device *kbdev,
  * kbasep_js_runpool_release_ctx()
  */
 void kbasep_js_runpool_release_ctx_and_katom_retained_state(
-		struct kbase_device *kbdev,
-		struct kbase_context *kctx,
-		struct kbasep_js_atom_retained_state *katom_retained_state);
+	struct kbase_device *kbdev, struct kbase_context *kctx,
+	struct kbasep_js_atom_retained_state *katom_retained_state);
 
 /**
- * kbasep_js_runpool_release_ctx_nolock -  Variant of
- * kbase_js_runpool_release_ctx() that assumes that
+ * kbasep_js_runpool_release_ctx_nolock - Variant of kbase_js_runpool_release_ctx()
+ *                                        without locks
+ * @kbdev: KBase device
+ * @kctx:  KBase context
+ *
+ * Variant of kbase_js_runpool_release_ctx() that assumes that
  * kbasep_js_device_data::runpool_mutex and
  * kbasep_js_kctx_info::ctx::jsctx_mutex are held by the caller, and does not
  * attempt to schedule new contexts.
  */
-void kbasep_js_runpool_release_ctx_nolock(struct kbase_device *kbdev,
-		struct kbase_context *kctx);
+void kbasep_js_runpool_release_ctx_nolock(struct kbase_device *kbdev, struct kbase_context *kctx);
 
 /**
  * kbasep_js_schedule_privileged_ctx -  Schedule in a privileged context
+ *
+ * @kbdev: KBase device
+ * @kctx:  KBase context
  *
  * This schedules a context in regardless of the context priority.
  * If the runpool is full, a context will be forced out of the runpool and the
@@ -346,12 +420,13 @@ void kbasep_js_runpool_release_ctx_nolock(struct kbase_device *kbdev,
  * be used internally.
  *
  */
-void kbasep_js_schedule_privileged_ctx(struct kbase_device *kbdev,
-		struct kbase_context *kctx);
+void kbasep_js_schedule_privileged_ctx(struct kbase_device *kbdev, struct kbase_context *kctx);
 
 /**
  * kbasep_js_release_privileged_ctx -  Release a privileged context,
  * allowing it to be scheduled out.
+ * @kbdev: KBase device
+ * @kctx:  KBase context
  *
  * See kbasep_js_runpool_release_ctx for potential side effects.
  *
@@ -364,11 +439,11 @@ void kbasep_js_schedule_privileged_ctx(struct kbase_device *kbdev,
  * obtained internally)
  *
  */
-void kbasep_js_release_privileged_ctx(struct kbase_device *kbdev,
-		struct kbase_context *kctx);
+void kbasep_js_release_privileged_ctx(struct kbase_device *kbdev, struct kbase_context *kctx);
 
 /**
  * kbase_js_try_run_jobs -  Try to submit the next job on each slot
+ * @kbdev: KBase device
  *
  * The following locks may be used:
  * * kbasep_js_device_data::runpool_mutex
@@ -379,12 +454,13 @@ void kbase_js_try_run_jobs(struct kbase_device *kbdev);
 /**
  * kbasep_js_suspend -  Suspend the job scheduler during a Power Management
  *                      Suspend event.
+ * @kbdev: KBase device
  *
  * Causes all contexts to be removed from the runpool, and prevents any
  * contexts from (re)entering the runpool.
  *
  * This does not handle suspending the one privileged context: the caller must
- * instead do this by by suspending the GPU HW Counter Instrumentation.
+ * instead do this by suspending the GPU HW Counter Instrumentation.
  *
  * This will eventually cause all Power Management active references held by
  * contexts on the runpool to be released, without running any more atoms.
@@ -402,6 +478,7 @@ void kbasep_js_suspend(struct kbase_device *kbdev);
 /**
  * kbasep_js_resume - Resume the Job Scheduler after a Power Management
  *                    Resume event.
+ * @kbdev: KBase device
  *
  * This restores the actions from kbasep_js_suspend():
  * * Schedules contexts back into the runpool
@@ -413,7 +490,7 @@ void kbasep_js_resume(struct kbase_device *kbdev);
  * kbase_js_dep_resolved_submit - Submit an atom to the job scheduler.
  *
  * @kctx:  Context pointer
- * @atom:  Pointer to the atom to submit
+ * @katom:  Pointer to the atom to submit
  *
  * The atom is enqueued on the context's ringbuffer. The caller must have
  * ensured that all dependencies can be represented in the ringbuffer.
@@ -422,21 +499,7 @@ void kbasep_js_resume(struct kbase_device *kbdev);
  *
  * Return: true if the context requires to be enqueued, otherwise false.
  */
-bool kbase_js_dep_resolved_submit(struct kbase_context *kctx,
-		struct kbase_jd_atom *katom);
-
-/**
- * jsctx_ll_flush_to_rb() - Pushes atoms from the linked list to ringbuffer.
- * @kctx:  Context Pointer
- * @prio:  Priority (specifies the queue together with js).
- * @js:    Job slot (specifies the queue together with prio).
- *
- * Pushes all possible atoms from the linked list to the ringbuffer.
- * Number of atoms are limited to free space in the ringbuffer and
- * number of available atoms in the linked list.
- *
- */
-void jsctx_ll_flush_to_rb(struct kbase_context *kctx, int prio, int js);
+bool kbase_js_dep_resolved_submit(struct kbase_context *kctx, struct kbase_jd_atom *katom);
 
 /**
  * kbase_js_pull - Pull an atom from a context in the job scheduler for
@@ -452,13 +515,13 @@ void jsctx_ll_flush_to_rb(struct kbase_context *kctx, int prio, int js);
  * Return: a pointer to an atom, or NULL if there are no atoms for this
  * slot that can be currently run.
  */
-struct kbase_jd_atom *kbase_js_pull(struct kbase_context *kctx, int js);
+struct kbase_jd_atom *kbase_js_pull(struct kbase_context *kctx, unsigned int js);
 
 /**
  * kbase_js_unpull - Return an atom to the job scheduler ringbuffer.
  *
  * @kctx:  Context pointer
- * @atom:  Pointer to the atom to unpull
+ * @katom:  Pointer to the atom to unpull
  *
  * An atom is 'unpulled' if execution is stopped but intended to be returned to
  * later. The most common reason for this is that the atom has been
@@ -486,8 +549,7 @@ void kbase_js_unpull(struct kbase_context *kctx, struct kbase_jd_atom *katom);
  *
  * Return: true if the context is now idle (no jobs pulled) false otherwise.
  */
-bool kbase_js_complete_atom_wq(struct kbase_context *kctx,
-		struct kbase_jd_atom *katom);
+bool kbase_js_complete_atom_wq(struct kbase_context *kctx, struct kbase_jd_atom *katom);
 
 /**
  * kbase_js_complete_atom - Complete an atom.
@@ -503,24 +565,7 @@ bool kbase_js_complete_atom_wq(struct kbase_context *kctx,
  * Return: a atom that has now been unblocked and can now be run, or NULL
  * if none
  */
-struct kbase_jd_atom *kbase_js_complete_atom(struct kbase_jd_atom *katom,
-		ktime_t *end_timestamp);
-
-/**
- * kbase_js_atom_blocked_on_x_dep - Decide whether to ignore a cross-slot
- *                                  dependency
- * @katom:	Pointer to an atom in the slot ringbuffer
- *
- * A cross-slot dependency is ignored if necessary to unblock incremental
- * rendering. If the atom at the start of a renderpass used too much memory
- * and was soft-stopped then the atom at the end of a renderpass is submitted
- * to hardware regardless of its dependency on the start-of-renderpass atom.
- * This can happen multiple times for the same pair of atoms.
- *
- * Return: true to block the atom or false to allow it to be submitted to
- * hardware.
- */
-bool kbase_js_atom_blocked_on_x_dep(struct kbase_jd_atom *katom);
+struct kbase_jd_atom *kbase_js_complete_atom(struct kbase_jd_atom *katom, ktime_t *end_timestamp);
 
 /**
  * kbase_js_sched - Submit atoms from all available contexts.
@@ -533,10 +578,10 @@ bool kbase_js_atom_blocked_on_x_dep(struct kbase_jd_atom *katom);
  * been used.
  *
  */
-void kbase_js_sched(struct kbase_device *kbdev, int js_mask);
+void kbase_js_sched(struct kbase_device *kbdev, unsigned int js_mask);
 
 /**
- * kbase_jd_zap_context - Attempt to deschedule a context that is being
+ * kbase_js_zap_context - Attempt to deschedule a context that is being
  *                        destroyed
  * @kctx: Context pointer
  *
@@ -560,8 +605,7 @@ void kbase_js_zap_context(struct kbase_context *kctx);
  *
  * Return: true if atom is valid false otherwise.
  */
-bool kbase_js_is_atom_valid(struct kbase_device *kbdev,
-		struct kbase_jd_atom *katom);
+bool kbase_js_is_atom_valid(struct kbase_device *kbdev, struct kbase_jd_atom *katom);
 
 /**
  * kbase_js_set_timeouts - update all JS timeouts with user specified data
@@ -585,7 +629,6 @@ void kbase_js_set_timeouts(struct kbase_device *kbdev);
  */
 void kbase_js_set_ctx_priority(struct kbase_context *kctx, int new_priority);
 
-
 /**
  * kbase_js_update_ctx_priority - update the context priority
  *
@@ -604,6 +647,8 @@ void kbase_js_update_ctx_priority(struct kbase_context *kctx);
 /**
  * kbasep_js_is_submit_allowed - Check that a context is allowed to submit
  *                               jobs on this policy
+ * @js_devdata: KBase Job Scheduler Device Data
+ * @kctx:       KBase context
  *
  * The purpose of this abstraction is to hide the underlying data size,
  * and wrap up the long repeated line of code.
@@ -611,48 +656,53 @@ void kbase_js_update_ctx_priority(struct kbase_context *kctx);
  * As with any bool, never test the return value with true.
  *
  * The caller must hold hwaccess_lock.
+ *
+ * Return: true if the context is allowed to submit jobs, false otherwise.
  */
-static inline bool kbasep_js_is_submit_allowed(
-		struct kbasep_js_device_data *js_devdata,
-		struct kbase_context *kctx)
+static inline bool kbasep_js_is_submit_allowed(struct kbasep_js_device_data *js_devdata,
+					       struct kbase_context *kctx)
 {
 	u16 test_bit;
 	bool is_allowed;
 
 	/* Ensure context really is scheduled in */
-	KBASE_DEBUG_ASSERT(kctx->as_nr != KBASEP_AS_NR_INVALID);
-	KBASE_DEBUG_ASSERT(kbase_ctx_flag(kctx, KCTX_SCHEDULED));
+	if (WARN((kctx->as_nr == KBASEP_AS_NR_INVALID) || !kbase_ctx_flag(kctx, KCTX_SCHEDULED),
+		 "%s: kctx %pK has assigned AS %d and context flag %d\n", __func__, (void *)kctx,
+		 kctx->as_nr, atomic_read(&kctx->flags)))
+		return false;
 
-	test_bit = (u16) (1u << kctx->as_nr);
+	test_bit = (u16)(1u << kctx->as_nr);
 
-	is_allowed = (bool) (js_devdata->runpool_irq.submit_allowed & test_bit);
-	dev_dbg(kctx->kbdev->dev, "JS: submit %s allowed on %p (as=%d)",
-			is_allowed ? "is" : "isn't", (void *)kctx, kctx->as_nr);
+	is_allowed = (bool)(js_devdata->runpool_irq.submit_allowed & test_bit);
+	dev_dbg(kctx->kbdev->dev, "JS: submit %s allowed on %pK (as=%d)",
+		is_allowed ? "is" : "isn't", (void *)kctx, kctx->as_nr);
 	return is_allowed;
 }
 
 /**
  * kbasep_js_set_submit_allowed - Allow a context to submit jobs on this policy
+ * @js_devdata: KBase Job Scheduler Device Data
+ * @kctx:       KBase context
  *
  * The purpose of this abstraction is to hide the underlying data size,
  * and wrap up the long repeated line of code.
  *
  * The caller must hold hwaccess_lock.
  */
-static inline void kbasep_js_set_submit_allowed(
-		struct kbasep_js_device_data *js_devdata,
-		struct kbase_context *kctx)
+static inline void kbasep_js_set_submit_allowed(struct kbasep_js_device_data *js_devdata,
+						struct kbase_context *kctx)
 {
 	u16 set_bit;
 
 	/* Ensure context really is scheduled in */
-	KBASE_DEBUG_ASSERT(kctx->as_nr != KBASEP_AS_NR_INVALID);
-	KBASE_DEBUG_ASSERT(kbase_ctx_flag(kctx, KCTX_SCHEDULED));
+	if (WARN((kctx->as_nr == KBASEP_AS_NR_INVALID) || !kbase_ctx_flag(kctx, KCTX_SCHEDULED),
+		 "%s: kctx %pK has assigned AS %d and context flag %d\n", __func__, (void *)kctx,
+		 kctx->as_nr, atomic_read(&kctx->flags)))
+		return;
 
-	set_bit = (u16) (1u << kctx->as_nr);
+	set_bit = (u16)(1u << kctx->as_nr);
 
-	dev_dbg(kctx->kbdev->dev, "JS: Setting Submit Allowed on %p (as=%d)",
-			kctx, kctx->as_nr);
+	dev_dbg(kctx->kbdev->dev, "JS: Setting Submit Allowed on %pK (as=%d)", kctx, kctx->as_nr);
 
 	js_devdata->runpool_irq.submit_allowed |= set_bit;
 }
@@ -660,52 +710,62 @@ static inline void kbasep_js_set_submit_allowed(
 /**
  * kbasep_js_clear_submit_allowed - Prevent a context from submitting more
  *                                  jobs on this policy
+ * @js_devdata: KBase Job Scheduler Device Data
+ * @kctx:       KBase context
  *
  * The purpose of this abstraction is to hide the underlying data size,
  * and wrap up the long repeated line of code.
  *
  * The caller must hold hwaccess_lock.
  */
-static inline void kbasep_js_clear_submit_allowed(
-		struct kbasep_js_device_data *js_devdata,
-		struct kbase_context *kctx)
+static inline void kbasep_js_clear_submit_allowed(struct kbasep_js_device_data *js_devdata,
+						  struct kbase_context *kctx)
 {
 	u16 clear_bit;
 	u16 clear_mask;
 
 	/* Ensure context really is scheduled in */
-	KBASE_DEBUG_ASSERT(kctx->as_nr != KBASEP_AS_NR_INVALID);
-	KBASE_DEBUG_ASSERT(kbase_ctx_flag(kctx, KCTX_SCHEDULED));
+	if (WARN((kctx->as_nr == KBASEP_AS_NR_INVALID) || !kbase_ctx_flag(kctx, KCTX_SCHEDULED),
+		 "%s: kctx %pK has assigned AS %d and context flag %d\n", __func__, (void *)kctx,
+		 kctx->as_nr, atomic_read(&kctx->flags)))
+		return;
 
-	clear_bit = (u16) (1u << kctx->as_nr);
+	clear_bit = (u16)(1u << kctx->as_nr);
 	clear_mask = ~clear_bit;
 
-	dev_dbg(kctx->kbdev->dev, "JS: Clearing Submit Allowed on %p (as=%d)",
-			kctx, kctx->as_nr);
+	dev_dbg(kctx->kbdev->dev, "JS: Clearing Submit Allowed on %pK (as=%d)", kctx, kctx->as_nr);
 
 	js_devdata->runpool_irq.submit_allowed &= clear_mask;
 }
 
 /**
+ * kbasep_js_atom_retained_state_init_invalid - Create an initial 'invalid'
+ *                                              atom retained state
+ *
+ * @retained_state: pointer where to create and initialize the state
+ *
  * Create an initial 'invalid' atom retained state, that requires no
  * atom-related work to be done on releasing with
  * kbasep_js_runpool_release_ctx_and_katom_retained_state()
  */
-static inline void kbasep_js_atom_retained_state_init_invalid(
-		struct kbasep_js_atom_retained_state *retained_state)
+static inline void
+kbasep_js_atom_retained_state_init_invalid(struct kbasep_js_atom_retained_state *retained_state)
 {
 	retained_state->event_code = BASE_JD_EVENT_NOT_STARTED;
-	retained_state->core_req =
-			KBASEP_JS_ATOM_RETAINED_STATE_CORE_REQ_INVALID;
+	retained_state->core_req = KBASEP_JS_ATOM_RETAINED_STATE_CORE_REQ_INVALID;
 }
 
 /**
- * Copy atom state that can be made available after jd_done_nolock() is called
+ * kbasep_js_atom_retained_state_copy() - Copy atom state
+ * @retained_state: where to copy
+ * @katom:          where to copy from
+ *
+ * Copy atom state that can be made available after kbase_jd_done_nolock() is called
  * on that atom.
  */
-static inline void kbasep_js_atom_retained_state_copy(
-		struct kbasep_js_atom_retained_state *retained_state,
-		const struct kbase_jd_atom *katom)
+static inline void
+kbasep_js_atom_retained_state_copy(struct kbasep_js_atom_retained_state *retained_state,
+				   const struct kbase_jd_atom *katom)
 {
 	retained_state->event_code = katom->event_code;
 	retained_state->core_req = katom->core_req;
@@ -729,22 +789,18 @@ static inline void kbasep_js_atom_retained_state_copy(
  *
  * Return: false if the atom has not finished, true otherwise.
  */
-static inline bool kbasep_js_has_atom_finished(
-	const struct kbasep_js_atom_retained_state *katom_retained_state)
+static inline bool
+kbasep_js_has_atom_finished(const struct kbasep_js_atom_retained_state *katom_retained_state)
 {
-	return (bool) (katom_retained_state->event_code !=
-			BASE_JD_EVENT_STOPPED &&
-		katom_retained_state->event_code !=
-			BASE_JD_EVENT_REMOVED_FROM_NEXT &&
-		katom_retained_state->event_code !=
-			BASE_JD_EVENT_END_RP_DONE);
+	return (bool)(katom_retained_state->event_code != BASE_JD_EVENT_STOPPED &&
+		      katom_retained_state->event_code != BASE_JD_EVENT_REMOVED_FROM_NEXT);
 }
 
 /**
  *  kbasep_js_atom_retained_state_is_valid - Determine whether a struct
  *                                           kbasep_js_atom_retained_state
  *                                           is valid
- * @katom_retained_state        the atom's retained state to check
+ * @katom_retained_state:        the atom's retained state to check
  *
  * An invalid struct kbasep_js_atom_retained_state is allowed, and indicates
  * that the code should just ignore it.
@@ -754,26 +810,24 @@ static inline bool kbasep_js_has_atom_finished(
 static inline bool kbasep_js_atom_retained_state_is_valid(
 	const struct kbasep_js_atom_retained_state *katom_retained_state)
 {
-	return (bool) (katom_retained_state->core_req !=
-			KBASEP_JS_ATOM_RETAINED_STATE_CORE_REQ_INVALID);
+	return (bool)(katom_retained_state->core_req !=
+		      KBASEP_JS_ATOM_RETAINED_STATE_CORE_REQ_INVALID);
 }
 
 /**
  * kbase_js_runpool_inc_context_count - Increment number of running contexts.
+ * @kbdev: KBase device
+ * @kctx:  KBase context
  *
  * The following locking conditions are made on the caller:
  * * The caller must hold the kbasep_js_kctx_info::ctx::jsctx_mutex.
  * * The caller must hold the kbasep_js_device_data::runpool_mutex
  */
-static inline void kbase_js_runpool_inc_context_count(
-						struct kbase_device *kbdev,
-						struct kbase_context *kctx)
+static inline void kbase_js_runpool_inc_context_count(struct kbase_device *kbdev,
+						      struct kbase_context *kctx)
 {
 	struct kbasep_js_device_data *js_devdata;
 	struct kbasep_js_kctx_info *js_kctx_info;
-
-	KBASE_DEBUG_ASSERT(kbdev != NULL);
-	KBASE_DEBUG_ASSERT(kctx != NULL);
 
 	js_devdata = &kbdev->js_data;
 	js_kctx_info = &kctx->jctx.sched_info;
@@ -782,13 +836,12 @@ static inline void kbase_js_runpool_inc_context_count(
 	lockdep_assert_held(&js_devdata->runpool_mutex);
 
 	/* Track total contexts */
-	KBASE_DEBUG_ASSERT(js_devdata->nr_all_contexts_running < S8_MAX);
+	WARN_ON_ONCE(js_devdata->nr_all_contexts_running >= JS_MAX_RUNNING_JOBS);
 	++(js_devdata->nr_all_contexts_running);
 
 	if (!kbase_ctx_flag(kctx, KCTX_SUBMIT_DISABLED)) {
 		/* Track contexts that can submit jobs */
-		KBASE_DEBUG_ASSERT(js_devdata->nr_user_contexts_running <
-									S8_MAX);
+		WARN_ON_ONCE(js_devdata->nr_user_contexts_running >= JS_MAX_RUNNING_JOBS);
 		++(js_devdata->nr_user_contexts_running);
 	}
 }
@@ -796,19 +849,17 @@ static inline void kbase_js_runpool_inc_context_count(
 /**
  * kbase_js_runpool_dec_context_count - decrement number of running contexts.
  *
+ * @kbdev: KBase device
+ * @kctx:  KBase context
  * The following locking conditions are made on the caller:
  * * The caller must hold the kbasep_js_kctx_info::ctx::jsctx_mutex.
  * * The caller must hold the kbasep_js_device_data::runpool_mutex
  */
-static inline void kbase_js_runpool_dec_context_count(
-						struct kbase_device *kbdev,
-						struct kbase_context *kctx)
+static inline void kbase_js_runpool_dec_context_count(struct kbase_device *kbdev,
+						      struct kbase_context *kctx)
 {
 	struct kbasep_js_device_data *js_devdata;
 	struct kbasep_js_kctx_info *js_kctx_info;
-
-	KBASE_DEBUG_ASSERT(kbdev != NULL);
-	KBASE_DEBUG_ASSERT(kctx != NULL);
 
 	js_devdata = &kbdev->js_data;
 	js_kctx_info = &kctx->jctx.sched_info;
@@ -818,12 +869,12 @@ static inline void kbase_js_runpool_dec_context_count(
 
 	/* Track total contexts */
 	--(js_devdata->nr_all_contexts_running);
-	KBASE_DEBUG_ASSERT(js_devdata->nr_all_contexts_running >= 0);
+	WARN_ON_ONCE(js_devdata->nr_all_contexts_running < 0);
 
 	if (!kbase_ctx_flag(kctx, KCTX_SUBMIT_DISABLED)) {
 		/* Track contexts that can submit jobs */
 		--(js_devdata->nr_user_contexts_running);
-		KBASE_DEBUG_ASSERT(js_devdata->nr_user_contexts_running >= 0);
+		WARN_ON_ONCE(js_devdata->nr_user_contexts_running < 0);
 	}
 }
 
@@ -838,27 +889,16 @@ static inline void kbase_js_runpool_dec_context_count(
  */
 static inline void kbase_js_sched_all(struct kbase_device *kbdev)
 {
-	struct pm_qos_request req = {
-		.type = PM_QOS_REQ_AFFINE_CORES,
-		.cpus_affine = ATOMIC_INIT(BIT(raw_smp_processor_id()))
-	};
-
-	pm_qos_add_request(&req, PM_QOS_CPU_DMA_LATENCY, 100);
-	kbase_js_sched(kbdev, (1 << kbdev->gpu_props.num_job_slots) - 1);
-	pm_qos_remove_request(&req);
-
-	return;
+	kbase_js_sched(kbdev, (1U << kbdev->gpu_props.num_job_slots) - 1U);
 }
 
-extern const int
-kbasep_js_atom_priority_to_relative[BASE_JD_NR_PRIO_LEVELS];
+extern const int kbasep_js_atom_priority_to_relative[BASE_JD_NR_PRIO_LEVELS];
 
-extern const base_jd_prio
-kbasep_js_relative_priority_to_atom[KBASE_JS_ATOM_SCHED_PRIO_COUNT];
+extern const base_jd_prio kbasep_js_relative_priority_to_atom[KBASE_JS_ATOM_SCHED_PRIO_COUNT];
 
 /**
- * kbasep_js_atom_prio_to_sched_prio(): - Convert atom priority (base_jd_prio)
- *                                        to relative ordering
+ * kbasep_js_atom_prio_to_sched_prio - Convert atom priority (base_jd_prio)
+ *                                     to relative ordering.
  * @atom_prio: Priority ID to translate.
  *
  * Atom priority values for @ref base_jd_prio cannot be compared directly to
@@ -887,16 +927,76 @@ static inline int kbasep_js_atom_prio_to_sched_prio(base_jd_prio atom_prio)
 	return kbasep_js_atom_priority_to_relative[atom_prio];
 }
 
-static inline base_jd_prio kbasep_js_sched_prio_to_atom_prio(int sched_prio)
+/**
+ * kbasep_js_sched_prio_to_atom_prio - Convert relative scheduler priority
+ *                                     to atom priority (base_jd_prio).
+ *
+ * @kbdev:    Device pointer
+ * @sched_prio: Relative scheduler priority to translate.
+ *
+ * This function will convert relative scheduler priority back into base_jd_prio
+ * values. It takes values which priorities are monotonically increasing
+ * and converts them to the corresponding base_jd_prio values. If an invalid number is
+ * passed in (i.e. not within the expected range) an error code is returned instead.
+ *
+ * The mapping is 1:1 and the size of the valid input range is the same as the
+ * size of the valid output range, i.e.
+ * KBASE_JS_ATOM_SCHED_PRIO_COUNT == BASE_JD_NR_PRIO_LEVELS
+ *
+ * Return: On success: a value in the inclusive range
+ *         0..BASE_JD_NR_PRIO_LEVELS-1. On failure: BASE_JD_PRIO_INVALID.
+ */
+static inline base_jd_prio kbasep_js_sched_prio_to_atom_prio(struct kbase_device *kbdev,
+							     int sched_prio)
 {
-	unsigned int prio_idx;
-
-	KBASE_DEBUG_ASSERT(sched_prio >= 0 &&
-			sched_prio < KBASE_JS_ATOM_SCHED_PRIO_COUNT);
-
-	prio_idx = (unsigned int)sched_prio;
-
-	return kbasep_js_relative_priority_to_atom[prio_idx];
+	if (likely(sched_prio >= 0 && sched_prio < KBASE_JS_ATOM_SCHED_PRIO_COUNT))
+		return kbasep_js_relative_priority_to_atom[sched_prio];
+	/* Invalid priority value if reached here */
+	dev_warn(kbdev->dev, "Unknown JS scheduling priority %d", sched_prio);
+	return BASE_JD_PRIO_INVALID;
 }
 
-#endif	/* _KBASE_JM_JS_H_ */
+/**
+ * kbase_js_priority_check - Check the priority requested
+ *
+ * @kbdev:    Device pointer
+ * @priority: Requested priority
+ *
+ * This will determine whether the requested priority can be satisfied.
+ *
+ * Return: The same or lower priority than requested.
+ */
+base_jd_prio kbase_js_priority_check(struct kbase_device *kbdev, base_jd_prio priority);
+
+/**
+ * kbase_js_atom_runs_before - determine if atoms for the same slot have an
+ *                             ordering relation
+ * @kbdev: kbase device
+ * @katom_a: the first atom
+ * @katom_b: the second atom.
+ * @order_flags: combination of KBASE_ATOM_ORDERING_FLAG_<...> for the ordering
+ *               relation
+ *
+ * This is for making consistent decisions about the ordering of atoms when we
+ * need to do pre-emption on a slot, which includes stopping existing atoms
+ * when a new atom is ready to run, and also which other atoms to remove from
+ * the slot when the atom in JS_HEAD is being pre-empted.
+ *
+ * This only handles @katom_a and @katom_b being for the same job slot, as
+ * pre-emption only operates within a slot.
+ *
+ * Note: there is currently no use-case for this as a sorting comparison
+ * functions, hence only a boolean returned instead of int -1, 0, +1 return. If
+ * required in future, a modification to do so would be better than calling
+ * twice with katom_a and katom_b swapped.
+ *
+ * Return:
+ * true if @katom_a should run before @katom_b, false otherwise.
+ * A false return value does not distinguish between "no ordering relation" and
+ * "@katom_a should run after @katom_b".
+ */
+bool kbase_js_atom_runs_before(struct kbase_device *kbdev, const struct kbase_jd_atom *katom_a,
+			       const struct kbase_jd_atom *katom_b,
+			       const kbase_atom_ordering_flag_t order_flags);
+
+#endif /* _KBASE_JM_JS_H_ */

@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *
- * (C) COPYRIGHT 2017, 2020 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2017-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
- *
- * SPDX-License-Identifier: GPL-2.0
  *
  */
 
@@ -32,6 +31,7 @@
  */
 
 #include <kutf/kutf_suite.h>
+#include <linux/device.h>
 
 /**
  * kutf_helper_pending_input() - Check any pending lines sent by user space
@@ -70,8 +70,7 @@ char *kutf_helper_input_dequeue(struct kutf_context *context, size_t *str_size);
  * Return: 0 on success, -EFAULT if the line cannot be copied from user space,
  * -ENOMEM if out of memory.
  */
-int kutf_helper_input_enqueue(struct kutf_context *context,
-		const char __user *str, size_t size);
+int kutf_helper_input_enqueue(struct kutf_context *context, const char __user *str, size_t size);
 
 /**
  * kutf_helper_input_enqueue_end_of_data() - Signal no more data is to be sent
@@ -82,4 +81,28 @@ int kutf_helper_input_enqueue(struct kutf_context *context,
  */
 void kutf_helper_input_enqueue_end_of_data(struct kutf_context *context);
 
-#endif	/* _KERNEL_UTF_HELPERS_H_ */
+/**
+ * kutf_helper_ignore_dmesg() - Write message in dmesg to instruct parser
+ *                              to ignore errors, until the counterpart
+ *                              is written to dmesg to stop ignoring errors.
+ * @dev:  Device pointer to write to dmesg using.
+ *
+ * This function writes "Start ignoring dmesg warnings" to dmesg, which
+ * the parser will read and not log any errors. Only to be used in cases where
+ * we expect an error to be produced in dmesg but that we do not want to be
+ * flagged as an error.
+ */
+void kutf_helper_ignore_dmesg(struct device *dev);
+
+/**
+ * kutf_helper_stop_ignoring_dmesg() - Write message in dmesg to instruct parser
+ *                                     to stop ignoring errors.
+ * @dev:  Device pointer to write to dmesg using.
+ *
+ * This function writes "Stop ignoring dmesg warnings" to dmesg, which
+ * the parser will read and continue to log any errors. Counterpart to
+ * kutf_helper_ignore_dmesg().
+ */
+void kutf_helper_stop_ignoring_dmesg(struct device *dev);
+
+#endif /* _KERNEL_UTF_HELPERS_H_ */

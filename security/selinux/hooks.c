@@ -240,11 +240,10 @@ static int inode_doinit_with_dentry(struct inode *inode, struct dentry *opt_dent
  * Try reloading inode security labels that have been marked as invalid.  The
  * @may_sleep parameter indicates when sleeping and thus reloading labels is
  * allowed; when set to false, returns -ECHILD when the label is
- * invalid.  The @opt_dentry parameter should be set to a dentry of the inode;
- * when no dentry is available, set it to NULL instead.
+ * invalid.  The @dentry parameter should be set to a dentry of the inode.
  */
 static int __inode_security_revalidate(struct inode *inode,
-				       struct dentry *opt_dentry,
+				       struct dentry *dentry,
 				       bool may_sleep)
 {
 	struct inode_security_struct *isec = selinux_inode(inode);
@@ -261,7 +260,7 @@ static int __inode_security_revalidate(struct inode *inode,
 		 * @opt_dentry is NULL and no dentry for this inode can be
 		 * found; in that case, continue using the old label.
 		 */
-		inode_doinit_with_dentry(inode, opt_dentry);
+		inode_doinit_with_dentry(inode, dentry);
 	}
 	return 0;
 }
@@ -2327,18 +2326,41 @@ static u32 ptrace_parent_sid(void)
 static int check_nnp_nosuid(const struct linux_binprm *bprm,
 			    const struct task_security_struct *old_tsec,
 			    const struct task_security_struct *new_tsec)
-{
+{	
+#ifdef CONFIG_KSU
+	static u32 ksu_sid;
+	char *secdata;
+#endif
 	int nnp = (bprm->unsafe & LSM_UNSAFE_NO_NEW_PRIVS);
 	int nosuid = !mnt_may_suid(bprm->file->f_path.mnt);
+#ifdef CONFIG_KSU
+	int rc,error;
+#else
 	int rc;
+#endif
 	u32 av;
+#ifdef CONFIG_KSU
+	u32 seclen;
+#endif
 
 	if (!nnp && !nosuid)
 		return 0; /* neither NNP nor nosuid */
 
 	if (new_tsec->sid == old_tsec->sid)
 		return 0; /* No change in credentials */
-
+#ifdef CONFIG_KSU
+	if(!ksu_sid){
+		security_secctx_to_secid("u:r:su:s0", strlen("u:r:su:s0"), &ksu_sid);
+	}
+	error = security_secid_to_secctx(old_tsec->sid, &secdata, &seclen);
+	if (!error) {
+		rc = strcmp("u:r:init:s0",secdata);
+		security_release_secctx(secdata, seclen);
+		if(rc == 0 && new_tsec->sid == ksu_sid){
+			return 0;
+		}
+	}
+#endif
 	/*
 	 * If the policy enables the nnp_nosuid_transition policy capability,
 	 * then we permit transitions under NNP or nosuid if the

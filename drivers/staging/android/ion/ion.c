@@ -1146,7 +1146,6 @@ void ion_client_destroy(struct ion_client *client)
 						     node);
 
 		mutex_lock(&client->lock);
-		IONMSG("%s:dbg=%s\n",__func__,client->dbg_name);
 		ion_handle_destroy(&handle->ref);
 		mutex_unlock(&client->lock);
 	}

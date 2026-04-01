@@ -19,6 +19,8 @@ obj-$(CONFIG_TOUCHSCREEN_FT8719)	+=  focaltech_gesture.o
 obj-$(CONFIG_TOUCHSCREEN_FT8719)	+=  focaltech_esdcheck.o
 obj-$(CONFIG_TOUCHSCREEN_FT8719)	+=  focaltech_point_report_check.o
 obj-$(CONFIG_TOUCHSCREEN_FT8719)	+=  focaltech_proximity.o
+ifdef CONFIG_TOUCHSCREEN_FT8719_DEBUG
 obj-$(CONFIG_TOUCHSCREEN_FT8719)	+=  focaltech_test/
+endif
 obj-$(CONFIG_TOUCHSCREEN_FT8719)	+=  focaltech_spi.o
 obj-$(CONFIG_TOUCHSCREEN_FT8719)	+=  focaltech_flash.o

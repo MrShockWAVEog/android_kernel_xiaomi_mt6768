@@ -946,10 +946,10 @@ static ssize_t fts_driverinfo_show(struct device *dev,
       snprintf(buf + count, PAGE_SIZE, "Driver Ver:%s\n", FTS_DRIVER_VERSION);
 
   count += snprintf(buf + count, PAGE_SIZE, "Resolution:(%d,%d)~(%d,%d)\n",
-                    pdata->x_min, pdata->y_min, pdata->x_max, pdata->y_max);
+                    FTS_X_MIN_DISPLAY_DEFAULT, FTS_Y_MIN_DISPLAY_DEFAULT, FTS_X_MAX_DISPLAY_DEFAULT, FTS_Y_MAX_DISPLAY_DEFAULT);
 
   count += snprintf(buf + count, PAGE_SIZE, "Max Touchs:%d\n",
-                    pdata->max_touch_number);
+                    FTS_MAX_POINTS_SUPPORT);
 
   count +=
       snprintf(buf + count, PAGE_SIZE, "reset gpio:%d,int gpio:%d,irq:%d\n",

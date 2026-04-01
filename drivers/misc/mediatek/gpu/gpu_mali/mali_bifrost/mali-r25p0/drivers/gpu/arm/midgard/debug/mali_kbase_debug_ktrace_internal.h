@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *
- * (C) COPYRIGHT 2020 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2020-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
- *
- * SPDX-License-Identifier: GPL-2.0
  *
  */
 
@@ -54,9 +53,8 @@ void kbasep_ktrace_backend_format_header(char *buffer, int sz, s32 *written);
  * %KBASE_KTRACE_FLAG_BACKEND clear. The backend must handle that setting
  * appropriately.
  */
-void kbasep_ktrace_backend_format_msg(struct kbase_ktrace_msg *trace_msg,
-		char *buffer, int sz, s32 *written);
-
+void kbasep_ktrace_backend_format_msg(struct kbase_ktrace_msg *trace_msg, char *buffer, int sz,
+				      s32 *written);
 
 /**
  * kbasep_ktrace_reserve - internal function to reserve space for a ktrace
@@ -64,6 +62,8 @@ void kbasep_ktrace_backend_format_msg(struct kbase_ktrace_msg *trace_msg,
  * @ktrace: kbase device's ktrace
  *
  * This may also empty the oldest entry in the ringbuffer to make space.
+ *
+ * Return: ktrace message
  */
 struct kbase_ktrace_msg *kbasep_ktrace_reserve(struct kbase_ktrace *ktrace);
 
@@ -79,10 +79,9 @@ struct kbase_ktrace_msg *kbasep_ktrace_reserve(struct kbase_ktrace *ktrace);
  *
  * The common part includes the mandatory parts of the backend part
  */
-void kbasep_ktrace_msg_init(struct kbase_ktrace *ktrace,
-		struct kbase_ktrace_msg *trace_msg, enum kbase_ktrace_code code,
-		struct kbase_context *kctx, kbase_ktrace_flag_t flags,
-		u64 info_val);
+void kbasep_ktrace_msg_init(struct kbase_ktrace *ktrace, struct kbase_ktrace_msg *trace_msg,
+			    enum kbase_ktrace_code code, struct kbase_context *kctx,
+			    kbase_ktrace_flag_t flags, u64 info_val);
 
 #endif /* KBASE_KTRACE_TARGET_RBUF */
 

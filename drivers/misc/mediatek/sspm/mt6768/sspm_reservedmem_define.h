@@ -61,7 +61,7 @@ static struct sspm_reserve_mblock sspm_reserve_mblock[NUMS_MEM_ID] = {
 		.num = SWPM_MEM_ID,
 		.size = 0xC00,  /* 3K */
 	},
-#if defined(CONFIG_MTK_GMO_RAM_OPTIMIZE) || defined(CONFIG_MTK_MET_MEM_ALLOC)
+#if defined(CONFIG_MTK_GMO_RAM_OPTIMIZE) || defined(CONFIG_MTK_MET_MEM_ALLOC) || !defined(CONFIG_MTK_ENG_BUILD)
 #else
 	{
 		.num = MET_MEM_ID,

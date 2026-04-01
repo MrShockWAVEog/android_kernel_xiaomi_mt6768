@@ -22,9 +22,8 @@
 include $(src)/Kbuild-mtk-custom-env
 
 mali_kbase-y += \
-	$(MALI_PLATFORM_DIR)/mali_kbase_config_mt6768.o \
-	$(MALI_PLATFORM_DIR)/mali_kbase_cpu_mt6768.o \
-#	mali_kbase_platform_fake.o
+	platform/$(MALI_PLATFORM_DIR)/mali_kbase_config_mt6768.o \
+	platform/$(MALI_PLATFORM_DIR)/mali_kbase_cpu_mt6768.o
 
 ccflags-y += \
 	-I$(srctree)/drivers/misc/mediatek/base/power/include

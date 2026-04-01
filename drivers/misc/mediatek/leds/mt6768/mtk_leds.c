@@ -45,7 +45,7 @@
 #include "mtkfb.h"
 #endif
 
-#define MET_USER_EVENT_SUPPORT
+//#define MET_USER_EVENT_SUPPORT
 #ifdef MET_USER_EVENT_SUPPORT
 #include <mt-plat/met_drv.h>
 #endif

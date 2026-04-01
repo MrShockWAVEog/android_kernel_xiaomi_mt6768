@@ -445,6 +445,14 @@ source "drivers/misc/mediatek/simtray/Kconfig"
 source "drivers/misc/mediatek/hdmi/Kconfig"
 source "drivers/misc/mediatek/otp/Kconfig"
 
+config MTK_MET
+        bool "Mediatek Embedded Technology"
+        depends on FTRACE && TRACING
+        help
+          For Mediatek Embedded Technology features.
+          It depends on FTRACE and TRACING.
+          Select "Y" if you want to use.
+          Select "N" if you are not sure.
 
 endmenu    # Misc
 

@@ -31,7 +31,6 @@
 #include "iostat.h"
 #include <trace/events/f2fs.h>
 #include <uapi/linux/f2fs.h>
-#include <trace/events/android_fs.h>
 
 static int f2fs_filemap_fault(struct vm_fault *vmf)
 {
@@ -267,15 +266,6 @@ static int f2fs_do_sync_file(struct file *file, loff_t start, loff_t end,
 
 	trace_f2fs_sync_file_enter(inode);
 
-	if (trace_android_fs_fsync_start_enabled()) {
-		char *path, pathbuf[MAX_TRACE_PATHBUF_LEN];
-
-		path = android_fstrace_get_pathname(pathbuf,
-				MAX_TRACE_PATHBUF_LEN, inode);
-		trace_android_fs_fsync_start(inode,
-				current->pid, path, current->comm);
-	}
-
 	if (S_ISDIR(inode->i_mode))
 		goto go_write;
 
@@ -393,8 +383,6 @@ flush_out:
 	f2fs_update_time(sbi, REQ_TIME);
 out:
 	trace_f2fs_sync_file_exit(inode, cp_reason, datasync, ret);
-	trace_android_fs_fsync_end(inode, start, end - start);
-
 	return ret;
 }
 
@@ -2097,9 +2085,6 @@ static int f2fs_ioc_start_atomic_write(struct file *filp, bool truncate)
 	loff_t isize;
 	int ret;
 
-	if (!(filp->f_mode & FMODE_WRITE))
-		return -EBADF;
-
 	if (!inode_owner_or_capable(inode))
 		return -EACCES;
 
@@ -2203,9 +2188,6 @@ static int f2fs_ioc_commit_atomic_write(struct file *filp)
 	struct inode *inode = file_inode(filp);
 	int ret;
 
-	if (!(filp->f_mode & FMODE_WRITE))
-		return -EBADF;
-
 	if (!inode_owner_or_capable(inode))
 		return -EACCES;
 
@@ -2236,9 +2218,6 @@ static int f2fs_ioc_abort_atomic_write(struct file *filp)
 {
 	struct inode *inode = file_inode(filp);
 	int ret;
-
-	if (!(filp->f_mode & FMODE_WRITE))
-		return -EBADF;
 
 	if (!inode_owner_or_capable(inode))
 		return -EACCES;

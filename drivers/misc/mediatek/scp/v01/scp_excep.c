@@ -502,7 +502,9 @@ static void scp_prepare_aed_dump(char *aed_str,
 	pr_debug("[SCP] %s begins:%s\n", __func__, aed_str);
 	scp_aee_last_reg();
 
+#if 0
 	scp_A_log = scp_get_last_log(SCP_A_ID);
+#endif
 
 
 	/* prepare scp aee detail information */
@@ -584,16 +586,20 @@ void scp_aed(enum scp_excep_id type, enum scp_core_id id)
 	case EXCEP_BOOTUP:
 		if (id == SCP_A_ID)
 			scp_aed_title = "SCP_A boot exception";
+#if 0
 		else
 			scp_aed_title = "SCP boot exception";
 		scp_get_log(id);
+#endif
 		break;
 	case EXCEP_RUNTIME:
 		if (id == SCP_A_ID)
 			scp_aed_title = "SCP_A runtime exception";
+#if 0
 		else
 			scp_aed_title = "SCP runtime exception";
 		scp_get_log(id);
+#endif
 			break;
 	default:
 		if (id == SCP_A_ID)

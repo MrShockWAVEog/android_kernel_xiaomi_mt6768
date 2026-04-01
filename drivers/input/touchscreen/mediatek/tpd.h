@@ -122,15 +122,19 @@ struct tpd_filter_t {
 };
 
 struct tpd_dts_info {
+#if 0
 	int tpd_resolution[2];
 	int touch_max_num;
 	int use_tpd_button;
 	int tpd_key_num;
 	int tpd_key_local[4];
+#endif
 	bool tpd_use_ext_gpio;
 	int rst_ext_gpio_num;
+#if 0
 	struct tpd_key_dim_local tpd_key_dim_local[4];
 	struct tpd_filter_t touch_filter;
+#endif
 };
 extern struct tpd_dts_info tpd_dts_data;
 struct tpd_attrs {

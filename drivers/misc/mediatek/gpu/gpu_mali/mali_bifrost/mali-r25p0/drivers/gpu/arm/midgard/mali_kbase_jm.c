@@ -1,11 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
 /*
  *
- * (C) COPYRIGHT 2014-2020 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2013-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,10 +17,7 @@
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
  *
- * SPDX-License-Identifier: GPL-2.0
- *
  */
-
 
 /*
  * HW access job manager common APIs
@@ -29,6 +27,7 @@
 #include "mali_kbase_hwaccess_jm.h"
 #include "mali_kbase_jm.h"
 
+#if !MALI_USE_CSF
 /**
  * kbase_jm_next_job() - Attempt to run the next @nr_jobs_to_submit jobs on slot
  *			 @js on the active context.
@@ -38,15 +37,13 @@
  *
  * Return: true if slot can still be submitted on, false if slot is now full.
  */
-static bool kbase_jm_next_job(struct kbase_device *kbdev, int js,
-				int nr_jobs_to_submit)
+static bool kbase_jm_next_job(struct kbase_device *kbdev, unsigned int js, int nr_jobs_to_submit)
 {
 	struct kbase_context *kctx;
 	int i;
 
 	kctx = kbdev->hwaccess.active_kctx[js];
-	dev_dbg(kbdev->dev,
-		"Trying to run the next %d jobs in kctx %p (s:%d)\n",
+	dev_dbg(kbdev->dev, "Trying to run the next %d jobs in kctx %pK (s:%u)\n",
 		nr_jobs_to_submit, (void *)kctx, js);
 
 	if (!kctx)
@@ -61,7 +58,7 @@ static bool kbase_jm_next_job(struct kbase_device *kbdev, int js,
 		kbase_backend_run_atom(kbdev, katom);
 	}
 
-	dev_dbg(kbdev->dev, "Slot ringbuffer should now be full (s:%d)\n", js);
+	dev_dbg(kbdev->dev, "Slot ringbuffer should now be full (s:%u)\n", js);
 	return false;
 }
 
@@ -73,13 +70,13 @@ u32 kbase_jm_kick(struct kbase_device *kbdev, u32 js_mask)
 	dev_dbg(kbdev->dev, "JM kick slot mask 0x%x\n", js_mask);
 
 	while (js_mask) {
-		int js = ffs(js_mask) - 1;
+		unsigned int js = (unsigned int)ffs((int)js_mask) - 1U;
 		int nr_jobs_to_submit = kbase_backend_slot_free(kbdev, js);
 
 		if (kbase_jm_next_job(kbdev, js, nr_jobs_to_submit))
-			ret_mask |= (1 << js);
+			ret_mask |= (1U << js);
 
-		js_mask &= ~(1 << js);
+		js_mask &= ~(1U << js);
 	}
 
 	dev_dbg(kbdev->dev, "Can still submit to mask 0x%x\n", ret_mask);
@@ -112,40 +109,45 @@ void kbase_jm_try_kick_all(struct kbase_device *kbdev)
 
 void kbase_jm_idle_ctx(struct kbase_device *kbdev, struct kbase_context *kctx)
 {
-	int js;
+	unsigned int js;
 
 	lockdep_assert_held(&kbdev->hwaccess_lock);
 
 	for (js = 0; js < BASE_JM_MAX_NR_SLOTS; js++) {
 		if (kbdev->hwaccess.active_kctx[js] == kctx) {
-			dev_dbg(kbdev->dev, "Marking kctx %p as inactive (s:%d)\n",
-					(void *)kctx, js);
+			dev_dbg(kbdev->dev, "Marking kctx %pK as inactive (s:%u)\n", (void *)kctx,
+				js);
 			kbdev->hwaccess.active_kctx[js] = NULL;
 		}
 	}
 }
 
 struct kbase_jd_atom *kbase_jm_return_atom_to_js(struct kbase_device *kbdev,
-				struct kbase_jd_atom *katom)
+						 struct kbase_jd_atom *katom)
 {
 	lockdep_assert_held(&kbdev->hwaccess_lock);
 
-	dev_dbg(kbdev->dev, "Atom %p is returning with event code 0x%x\n",
-		(void *)katom, katom->event_code);
+	dev_dbg(kbdev->dev, "Atom %pK is returning with event code 0x%x\n", (void *)katom,
+		katom->event_code);
+
+	KBASE_KTRACE_ADD_JM(kbdev, JM_RETURN_ATOM_TO_JS, katom->kctx, katom, katom->jc,
+			    katom->event_code);
 
 	if (katom->event_code != BASE_JD_EVENT_STOPPED &&
-			katom->event_code != BASE_JD_EVENT_REMOVED_FROM_NEXT) {
+	    katom->event_code != BASE_JD_EVENT_REMOVED_FROM_NEXT) {
 		return kbase_js_complete_atom(katom, NULL);
-	} else {
-		kbase_js_unpull(katom->kctx, katom);
-		return NULL;
 	}
+
+	kbase_js_unpull(katom->kctx, katom);
+
+	return NULL;
 }
 
-struct kbase_jd_atom *kbase_jm_complete(struct kbase_device *kbdev,
-		struct kbase_jd_atom *katom, ktime_t *end_timestamp)
+struct kbase_jd_atom *kbase_jm_complete(struct kbase_device *kbdev, struct kbase_jd_atom *katom,
+					ktime_t *end_timestamp)
 {
 	lockdep_assert_held(&kbdev->hwaccess_lock);
 
 	return kbase_js_complete_atom(katom, end_timestamp);
 }
+#endif /* !MALI_USE_CSF */

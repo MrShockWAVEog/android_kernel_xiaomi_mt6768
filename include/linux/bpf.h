@@ -761,6 +761,16 @@ struct bpf_ctx_arg_aux {
 	u32 btf_id;
 };
 
+struct bpf_dev_offload {
+	struct bpf_prog		*prog;
+	struct net_device	*netdev;
+	void			*dev_priv;
+	struct list_head	offloads;
+	bool			dev_state;
+	bool			verifier_running;
+	wait_queue_head_t	verifier_done;
+};
+
 struct bpf_prog_aux {
 	atomic64_t refcnt;
 	u32 used_map_cnt;
@@ -1208,6 +1218,8 @@ extern const struct file_operations bpf_iter_fops;
 extern const struct bpf_prog_ops bpf_offload_prog_ops;
 extern const struct bpf_verifier_ops tc_cls_act_analyzer_ops;
 extern const struct bpf_verifier_ops xdp_analyzer_ops;
+
+extern const struct bpf_verifier_ops bpf_offload_prog_ops;
 
 struct bpf_prog *bpf_prog_get(u32 ufd);
 struct bpf_prog *bpf_prog_get_type_dev(u32 ufd, enum bpf_prog_type type,

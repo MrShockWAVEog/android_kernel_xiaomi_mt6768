@@ -1850,7 +1850,6 @@ static void rmap_walk_anon(struct page *page, struct rmap_walk_control *rwc,
 		unsigned long address = vma_address(page, rwc->target_vma);
 
 		rwc->rmap_one(page, rwc->target_vma, address, rwc->arg);
-		return;
 	}
 
 	if (locked) {

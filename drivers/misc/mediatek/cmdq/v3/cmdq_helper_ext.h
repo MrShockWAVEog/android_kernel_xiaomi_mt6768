@@ -191,29 +191,16 @@ do {if (1) mmprofile_log_ex(args); } while (0);	\
 
 /* CMDQ FTRACE */
 #define CMDQ_TRACE_FORCE_BEGIN(fmt, args...) do { \
-	preempt_disable(); \
-	event_trace_printk(cmdq_get_tracing_mark(), \
-		"B|%d|"fmt, current->tgid, ##args); \
-	preempt_enable();\
 } while (0)
 
 #define CMDQ_TRACE_FORCE_END() do { \
-	preempt_disable(); \
-	event_trace_printk(cmdq_get_tracing_mark(), "E\n"); \
-	preempt_enable(); \
 } while (0)
 
 
 #define CMDQ_SYSTRACE_BEGIN(fmt, args...) do { \
-	if (cmdq_core_ftrace_enabled()) { \
-		CMDQ_TRACE_FORCE_BEGIN(fmt, ##args); \
-	} \
 } while (0)
 
 #define CMDQ_SYSTRACE_END() do { \
-	if (cmdq_core_ftrace_enabled()) { \
-		CMDQ_TRACE_FORCE_END(); \
-	} \
 } while (0)
 
 #define CMDQ_GET_TIME_IN_MS(start, end, duration)	\

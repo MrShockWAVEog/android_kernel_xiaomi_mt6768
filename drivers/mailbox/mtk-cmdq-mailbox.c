@@ -103,10 +103,6 @@ int mtk_cmdq_err = 1;
 EXPORT_SYMBOL(mtk_cmdq_err);
 module_param(mtk_cmdq_log, int, 0644);
 
-int cmdq_trace;
-EXPORT_SYMBOL(cmdq_trace);
-module_param(cmdq_trace, int, 0644);
-
 struct cmdq_task {
 	struct cmdq		*cmdq;
 	struct list_head	list_entry;
@@ -1358,8 +1354,6 @@ void cmdq_thread_dump_all_seq(void *mbox_cmdq, struct seq_file *seq)
 	u32 en, curr_pa, end_pa;
 	s32 usage = atomic_read(&cmdq->usage);
 
-	seq_printf(seq, "[cmdq] cmdq:%#x usage:%d\n",
-		(u32)cmdq->base_pa, usage);
 	if (usage <= 0)
 		return;
 
@@ -1375,9 +1369,6 @@ void cmdq_thread_dump_all_seq(void *mbox_cmdq, struct seq_file *seq)
 
 		curr_pa = cmdq_thread_get_pc(thread);
 		end_pa = cmdq_thread_get_end(thread);
-
-		seq_printf(seq, "[cmdq] thd idx:%u pc:%#x end:%#x\n",
-			thread->idx, curr_pa, end_pa);
 	}
 
 }
@@ -2270,6 +2261,7 @@ void cmdq_event_verify(void *chan, u16 event_id)
 }
 EXPORT_SYMBOL(cmdq_event_verify);
 
+#if 0
 unsigned long cmdq_get_tracing_mark(void)
 {
 	static unsigned long __read_mostly tracing_mark_write_addr;
@@ -2280,6 +2272,7 @@ unsigned long cmdq_get_tracing_mark(void)
 
 	return tracing_mark_write_addr;
 }
+#endif
 
 #if IS_ENABLED(CONFIG_MMPROFILE)
 void cmdq_mmp_wait(struct mbox_chan *chan, void *pkt)

@@ -13,6 +13,7 @@
 #define PFX			KBUILD_MODNAME ": "
 #define MT67XX_RNG_MAGIC	0x74726e67
 #define SMC_RET_NUM		4
+#define SEC_RND_SIZE	(sizeof(u32) * SMC_RET_NUM)
 
 struct mt67xx_rng_priv {
 	struct hwrng rng;
@@ -34,25 +35,16 @@ static void __rng_sec_read(uint32_t *val)
 
 static int mt67xx_rng_read(struct hwrng *rng, void *buf, size_t max, bool wait)
 {
-	int i, retval = 0;
+	int retval = 0;
 	uint32_t val[4] = {0};
-	size_t get_rnd_size = sizeof(u32) * SMC_RET_NUM;
 
-	if (!buf) {
-		pr_err("%s, buf is NULL\n", __func__);
-		return -EFAULT;
-	}
-
-	while (max >= get_rnd_size) {
+	while (max >= SEC_RND_SIZE) {
 		__rng_sec_read(val);
 
-		for (i = 0; i < SMC_RET_NUM; i++) {
-			*(u32 *)buf = val[i];
-			buf += sizeof(u32);
-		}
-
-		retval += get_rnd_size;
-		max -= get_rnd_size;
+		memcpy(buf, val, SEC_RND_SIZE);
+		buf += SEC_RND_SIZE;
+		retval += SEC_RND_SIZE;
+		max -= SEC_RND_SIZE;
 	}
 
 	return retval;

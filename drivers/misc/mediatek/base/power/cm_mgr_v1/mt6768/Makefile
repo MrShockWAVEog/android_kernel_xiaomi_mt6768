@@ -13,10 +13,8 @@
 
 SSPM_VER := v1
 
-ifneq ($(wildcard $(srctree)/drivers/misc/mediatek/met_drv/),)
-ccflags-y += -DMET_SUPPORT
-ccflags-y += -DMET_USER_EVENT_SUPPORT
-endif
+ccflags-$(CONFIG_MTK_MET) += -DMET_SUPPORT
+ccflags-$(CONFIG_MTK_MET) += -DMET_USER_EVENT_SUPPORT
 
 ccflags-y += \
 	-I$(CPUFREQ_ROOT_DIR)/inc \

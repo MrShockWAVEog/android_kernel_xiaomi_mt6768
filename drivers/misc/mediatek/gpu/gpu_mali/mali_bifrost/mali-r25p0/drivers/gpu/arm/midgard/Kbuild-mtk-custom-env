@@ -1,5 +1,3 @@
-$(info mali MTK evironment, building r25p0 DDK)
-
 MTK_TOP = $(srctree)/drivers/misc/mediatek/
 
 # build support for a ARM Mali Midgard GPU
@@ -13,6 +11,7 @@ $(info mtk-Kbuild CONFIG_MALI_PLATFORM_THIRDPARTY := $(CONFIG_MALI_PLATFORM_THIR
 $(info mtk-Kbuild CONFIG_MALI_PLATFORM_THIRDPARTY_NAME := $(CONFIG_MALI_PLATFORM_THIRDPARTY_NAME))
 
 CONFIG_MALI_DEBUG := n
+CONFIG_GPU_TRACEPOINTS := y
 
 ccflags-y += -I-I$(srctree)/include
 ccflags-y += -I$(srctree)/drivers/staging/android
@@ -30,12 +29,22 @@ ccflags-y += -DCONFIG_PROC_FS
 ccflags-y += -DENABLE_MTK_MEMINFO
 ccflags-$(CONFIG_MTK_GPU_COMMON_DVFS_SUPPORT) += -DENABLE_COMMON_DVFS
 
-ifneq (, $(findstring $(CONFIG_MTK_PLATFORM), "mt6785"))
-ccflags-y += -DMTK_GPU_BM_2
-$(info *GPU defined GPU BM QoS 2.0)
-endif
-
-ifneq (, $(findstring $(CONFIG_MTK_PLATFORM), "mt6771"))
-ccflags-y += -DENABLE_MTK_DEBUG
-$(info *GPU defined ENABLE_MTK_DEBUG)
-endif
+# Mali-G52 MP2 r1p0
+ccflags-y += -DTGOX_arch_major=7
+ccflags-y += -DTGOX_version_status=0
+ccflags-y += -DTGOX_version_minor=0
+ccflags-y += -DTGOX_version_major=1
+ccflags-y += -DTGOX_product_major=2
+ccflags-y += -DTGOX_arch_rev=0
+ccflags-y += -DTGOX_arch_minor=4
+ccflags-y += -DTGOX_product_id=117702658u
+ccflags-y += -DTGOX_product_model=117440514u
+ccflags-y += -DTGOX_version_id=65536u
+ccflags-y += -DTGOX_arch_id=459776u
+ccflags-y += -DTGOX_shader_present=3
+ccflags-y += -DTGOX_tiler_present=1
+ccflags-y += -DTGOX_stack_present=3
+ccflags-y += -DTGOX_l2_present=1
+ccflags-y += -DTGOX_num_cores=2
+ccflags-y += -DTGOX_num_core_groups=1
+ccflags-y += -DTGOX_num_exec_engines=2

@@ -520,6 +520,10 @@ int bat_percent_notify_handler(void *unused)
 	ktime_t ktime;
 	int bat_per_val = 0;
 
+	struct sched_param param = { .sched_priority = 0 };
+	sched_setscheduler(current, SCHED_IDLE, &param);
+	set_task_ioprio(current, IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0));
+
 	do {
 		ktime = ktime_set(10, 0);
 
@@ -1057,6 +1061,10 @@ int dlpt_notify_handler(void *unused)
 	int cur_ui_soc = 0;
 	int diff_ui_soc = 1;
 	unsigned short power_off_cnt = 0;
+
+	struct sched_param param = { .sched_priority = 0 };
+	sched_setscheduler(current, SCHED_IDLE, &param);
+	set_task_ioprio(current, IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0));
 
 	pre_ui_soc = battery_get_uisoc();
 	cur_ui_soc = pre_ui_soc;

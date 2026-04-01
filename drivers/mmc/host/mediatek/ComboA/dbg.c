@@ -2016,6 +2016,7 @@ static int rwThread(void *data)
 
 void msdc_dump_gpd_bd(int id)
 {
+#ifdef CONFIG_MTK_ENG_BUILD
 	struct msdc_host *host;
 	u32 i, j, k;
 	u8 *cptr;
@@ -2103,6 +2104,7 @@ void msdc_dump_gpd_bd(int id)
 			bd++;
 		}
 	}
+#endif
 }
 
 /* FIX ME: Move to user space */

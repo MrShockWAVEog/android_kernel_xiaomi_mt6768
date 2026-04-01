@@ -119,6 +119,7 @@ static struct GED_LOG_BUF *ged_log_buf_from_handle(GED_LOG_BUF_HANDLE hLogBuf)
 	return ged_hashtable_find(ghHashTable, (unsigned long)hLogBuf);
 }
 
+#if 0
 static
 GED_ERROR __ged_log_buf_vprint(struct GED_LOG_BUF *psGEDLogBuf,
 	const char *fmt, va_list args, int attrs)
@@ -259,7 +260,10 @@ GED_ERROR __ged_log_buf_vprint(struct GED_LOG_BUF *psGEDLogBuf,
 
 	return GED_OK;
 }
+#endif
+#define __ged_log_buf_vprint(psGEDLogBuf, fmt, args, attrs) (0)
 
+#if 0
 static
 GED_ERROR __ged_log_buf_print(struct GED_LOG_BUF *psGEDLogBuf,
 	const char *fmt, ...)
@@ -274,10 +278,13 @@ GED_ERROR __ged_log_buf_print(struct GED_LOG_BUF *psGEDLogBuf,
 
 	return err;
 }
+#endif
+#define __ged_log_buf_print(psGEDLogBuf, fmt, ...) (0)
 
 static int __ged_log_buf_write(struct GED_LOG_BUF *psGEDLogBuf,
 	const char __user *pszBuffer, int i32Count)
 {
+#if 0
 	int cnt;
 	char buf[256];
 
@@ -297,6 +304,8 @@ static int __ged_log_buf_write(struct GED_LOG_BUF *psGEDLogBuf,
 	__ged_log_buf_print(psGEDLogBuf, "%s", buf);
 
 	return cnt;
+#endif
+	return i32Count;
 }
 
 static int __ged_log_buf_check_get_early_list(GED_LOG_BUF_HANDLE hLogBuf,
@@ -415,6 +424,7 @@ static int ged_log_buf_seq_show(struct seq_file *psSeqFile, void *pvData)
 	if (psGEDLogBuf != NULL) {
 		int i;
 
+#if 0
 #ifdef CONFIG_MTK_GPU_SUPPORT /* Only enable when GPU isn't kerenl module */
 #if defined(CONFIG_MACH_MT8167) || defined(CONFIG_MACH_MT8173)\
 || defined(CONFIG_MACH_MT6739) || defined(CONFIG_MACH_MT6761)\
@@ -423,6 +433,7 @@ static int ged_log_buf_seq_show(struct seq_file *psSeqFile, void *pvData)
 			ged_dump_fw();
 #endif
 #endif /* CONFIG_MTK_GPU_SUPPORT */
+#endif
 
 		spin_lock_irqsave(&psGEDLogBuf->sSpinLock,
 			psGEDLogBuf->ulIRQFlags);
@@ -482,7 +493,7 @@ GED_LOG_BUF_HANDLE ged_log_buf_alloc(
 	GED_ERROR error;
 
 	if (((!pszName) && (!pszNodeName))
-		|| (i32MaxLineCount <= 0) || (i32MaxBufferSizeByte <= 0)) {
+		/*|| (i32MaxLineCount <= 0) || (i32MaxBufferSizeByte <= 0)*/) {
 		return (GED_LOG_BUF_HANDLE)0;
 	}
 
@@ -495,6 +506,7 @@ GED_LOG_BUF_HANDLE ged_log_buf_alloc(
 
 	psGEDLogBuf->eType = eType;
 
+#if 0
 	switch (eType) {
 	case GED_LOG_BUF_TYPE_RINGBUFFER:
 		psGEDLogBuf->attrs = GED_LOG_ATTR_RINGBUFFER;
@@ -507,7 +519,9 @@ GED_LOG_BUF_HANDLE ged_log_buf_alloc(
 			GED_LOG_ATTR_QUEUEBUFFER | GED_LOG_ATTR_AUTO_INCREASE;
 		break;
 	}
+#endif
 
+#if 0
 	psGEDLogBuf->i32MemorySize = i32MaxBufferSizeByte
 		+ sizeof(struct GED_LOG_BUF_LINE) * i32MaxLineCount;
 	psGEDLogBuf->pMemory = ged_alloc(psGEDLogBuf->i32MemorySize);
@@ -516,11 +530,20 @@ GED_LOG_BUF_HANDLE ged_log_buf_alloc(
 		GED_LOGE("ged: failed to allocate log buf!\n");
 		return (GED_LOG_BUF_HANDLE)0;
 	}
+#endif
+	psGEDLogBuf->i32MemorySize = 0;
+	psGEDLogBuf->pMemory = NULL;
 
+#if 0
 	psGEDLogBuf->psLine = (struct GED_LOG_BUF_LINE *)psGEDLogBuf->pMemory;
 	psGEDLogBuf->pcBuffer = (char *)&psGEDLogBuf->psLine[i32MaxLineCount];
 	psGEDLogBuf->i32LineCount = i32MaxLineCount;
 	psGEDLogBuf->i32BufferSize = i32MaxBufferSizeByte;
+#endif
+	psGEDLogBuf->psLine = NULL;
+	psGEDLogBuf->pcBuffer = NULL;
+	psGEDLogBuf->i32LineCount = 0;
+	psGEDLogBuf->i32BufferSize = 0;
 	psGEDLogBuf->i32LineCurrent = 0;
 	psGEDLogBuf->i32BufferCurrent = 0;
 
@@ -529,12 +552,14 @@ GED_LOG_BUF_HANDLE ged_log_buf_alloc(
 	psGEDLogBuf->acName[0] = '\0';
 	psGEDLogBuf->acNodeName[0] = '\0';
 
+#if 0
 	/* Init Line */
 	{
 		int i = 0;
 		for (i = 0; i < psGEDLogBuf->i32LineCount; ++i)
 			psGEDLogBuf->psLine[i].offset = -1;
 	}
+#endif
 
 	if (pszName) {
 		int cx;
@@ -570,8 +595,10 @@ GED_LOG_BUF_HANDLE ged_log_buf_alloc(
 			write_lock_bh(&gsGEDLogBufList.sLock);
 			list_del(&psGEDLogBuf->sList);
 			write_unlock_bh(&gsGEDLogBufList.sLock);
+#if 0
 			ged_free(psGEDLogBuf->pMemory,
 				psGEDLogBuf->i32MemorySize);
+#endif
 			ged_free(psGEDLogBuf, sizeof(struct GED_LOG_BUF));
 			return (GED_LOG_BUF_HANDLE)0;
 		}
@@ -841,6 +868,7 @@ void ged_log_buf_free(GED_LOG_BUF_HANDLE hLogBuf)
 }
 EXPORT_SYMBOL(ged_log_buf_free);
 //-----------------------------------------------------------------------------
+#if 0
 GED_ERROR ged_log_buf_print(GED_LOG_BUF_HANDLE hLogBuf, const char *fmt, ...)
 {
 	va_list args;
@@ -878,6 +906,7 @@ GED_ERROR ged_log_buf_print2(GED_LOG_BUF_HANDLE hLogBuf,
 	return GED_OK;
 }
 EXPORT_SYMBOL(ged_log_buf_print2);
+#endif
 //-----------------------------------------------------------------------------
 GED_ERROR ged_log_buf_reset(GED_LOG_BUF_HANDLE hLogBuf)
 {
@@ -1190,6 +1219,7 @@ void ged_log_perf_trace_counter(char *name, long long count, int pid,
 {
 	if (ged_log_perf_trace_enable) {
 		__mt_update_tracing_mark_write_addr();
+#if 0
 /*
  * event_trace_printk cause build error in gki flavor, so we also check
  * CONFIG_MTK_GPU_SUPPORT=y
@@ -1200,6 +1230,7 @@ void ged_log_perf_trace_counter(char *name, long long count, int pid,
 			"C|%d|%s|%lld|%llu|%lu\n", pid,
 			name, count, (unsigned long long)BQID, frameID);
 		preempt_enable();
+#endif
 #endif
 	}
 }

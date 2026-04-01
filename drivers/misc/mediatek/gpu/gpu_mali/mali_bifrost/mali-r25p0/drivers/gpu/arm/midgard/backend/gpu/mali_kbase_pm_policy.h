@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *
- * (C) COPYRIGHT 2010-2015, 2018-2019 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2010-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
- *
- * SPDX-License-Identifier: GPL-2.0
  *
  */
 
@@ -81,8 +80,7 @@ void kbase_pm_update_cores(struct kbase_device *kbdev);
  * Return: true if the request to the HW was successfully made else false if the
  *         request is still pending.
  */
-static inline bool kbase_pm_cores_requested(struct kbase_device *kbdev,
-		bool shader_required)
+static inline bool kbase_pm_cores_requested(struct kbase_device *kbdev, bool shader_required)
 {
 	lockdep_assert_held(&kbdev->hwaccess_lock);
 
@@ -90,14 +88,14 @@ static inline bool kbase_pm_cores_requested(struct kbase_device *kbdev,
 	 * available, and shaders are definitely not powered.
 	 */
 	if (kbdev->pm.backend.l2_state != KBASE_L2_PEND_ON &&
-			kbdev->pm.backend.l2_state != KBASE_L2_ON &&
-			kbdev->pm.backend.l2_state != KBASE_L2_ON_HWCNT_ENABLE)
+	    kbdev->pm.backend.l2_state != KBASE_L2_ON &&
+	    kbdev->pm.backend.l2_state != KBASE_L2_ON_HWCNT_ENABLE)
 		return false;
 
 	if (shader_required &&
-			kbdev->pm.backend.shaders_state != KBASE_SHADERS_PEND_ON_CORESTACK_ON &&
-			kbdev->pm.backend.shaders_state != KBASE_SHADERS_ON_CORESTACK_ON &&
-			kbdev->pm.backend.shaders_state != KBASE_SHADERS_ON_CORESTACK_ON_RECHECK)
+	    kbdev->pm.backend.shaders_state != KBASE_SHADERS_PEND_ON_CORESTACK_ON &&
+	    kbdev->pm.backend.shaders_state != KBASE_SHADERS_ON_CORESTACK_ON &&
+	    kbdev->pm.backend.shaders_state != KBASE_SHADERS_ON_CORESTACK_ON_RECHECK)
 		return false;
 
 	return true;

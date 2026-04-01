@@ -1,11 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
 /*
  *
- * (C) COPYRIGHT 2014, 2017 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2014-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,8 +17,6 @@
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
  *
- * SPDX-License-Identifier: GPL-2.0
- *
  */
 
 /* Kernel UTF memory management functions */
@@ -27,7 +26,6 @@
 #include <linux/export.h>
 
 #include <kutf/kutf_mem.h>
-
 
 /**
  * struct kutf_alloc_entry - Structure representing an allocation.
@@ -72,7 +70,6 @@ void kutf_mempool_destroy(struct kutf_mempool *pool)
 		kfree(remove_alloc);
 	}
 	mutex_unlock(&pool->lock);
-
 }
 EXPORT_SYMBOL(kutf_mempool_destroy);
 

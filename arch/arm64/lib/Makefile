@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0
 lib-y		:= bitops.o clear_user.o delay.o copy_from_user.o	\
 		   copy_to_user.o copy_in_user.o copy_page.o		\
-		   clear_page.o memchr.o memcpy.o memmove.o memset.o	\
-		   memcmp.o strcmp.o strncmp.o strlen.o strnlen.o	\
-		   strchr.o strrchr.o tishift.o
+		   clear_page.o csum.o memchr.o memcpy.o		\
+		   memset.o memcmp.o strcmp.o strncmp.o strlen.o	\
+		   strnlen.o strchr.o strrchr.o tishift.o
 
 # Tell the compiler to treat all general purpose registers (with the
 # exception of the IP registers, which are already handled by the caller
@@ -25,3 +25,5 @@ CFLAGS_atomic_ll_sc.o	:= -ffixed-x1 -ffixed-x2        		\
 		   -fcall-saved-x18
 
 lib-$(CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE) += uaccess_flushcache.o
+
+obj-$(CONFIG_CRC32) += crc32.o

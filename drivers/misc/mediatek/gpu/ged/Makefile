@@ -430,8 +430,9 @@ endif
 #
 # common config
 #
-ccflags-y += -DMET_USER_EVENT_SUPPORT -DMTK_GPU_DVFS
-ccflags-y += -DGED_DVFS_DEBUG_BUF
+ccflags-$(CONFIG_MTK_MET) += -DMET_USER_EVENT_SUPPORT
+ccflags-y += -DMTK_GPU_DVFS
+#ccflags-y += -DGED_DVFS_DEBUG_BUF
 #ccflags-y += -DGED_KPI_DEBUG
 
 ifeq ($(CONFIG_MTK_ENG_BUILD),y)

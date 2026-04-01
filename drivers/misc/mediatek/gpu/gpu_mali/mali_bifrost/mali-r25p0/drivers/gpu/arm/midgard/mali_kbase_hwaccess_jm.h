@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *
- * (C) COPYRIGHT 2014-2020 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2014-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,10 +17,7 @@
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
  *
- * SPDX-License-Identifier: GPL-2.0
- *
  */
-
 
 /*
  * HW access job manager common APIs
@@ -31,12 +29,11 @@
 /**
  * kbase_backend_run_atom() - Run an atom on the GPU
  * @kbdev:	Device pointer
- * @atom:	Atom to run
+ * @katom:	Atom to run
  *
  * Caller must hold the HW access lock
  */
-void kbase_backend_run_atom(struct kbase_device *kbdev,
-				struct kbase_jd_atom *katom);
+void kbase_backend_run_atom(struct kbase_device *kbdev, struct kbase_jd_atom *katom);
 
 /**
  * kbase_backend_slot_update - Update state based on slot ringbuffers
@@ -64,8 +61,8 @@ void kbase_backend_slot_update(struct kbase_device *kbdev);
  * Return: Number of free address space, or KBASEP_AS_NR_INVALID if none
  *	   available
  */
-int kbase_backend_find_and_release_free_address_space(
-		struct kbase_device *kbdev, struct kbase_context *kctx);
+int kbase_backend_find_and_release_free_address_space(struct kbase_device *kbdev,
+						      struct kbase_context *kctx);
 
 /**
  * kbase_backend_use_ctx() - Activate a currently unscheduled context, using the
@@ -78,9 +75,7 @@ int kbase_backend_find_and_release_free_address_space(
  *
  * Return: true if successful, false if ASID not assigned.
  */
-bool kbase_backend_use_ctx(struct kbase_device *kbdev,
-				struct kbase_context *kctx,
-				int as_nr);
+bool kbase_backend_use_ctx(struct kbase_device *kbdev, struct kbase_context *kctx, int as_nr);
 
 /**
  * kbase_backend_use_ctx_sched() - Activate a context.
@@ -99,8 +94,8 @@ bool kbase_backend_use_ctx(struct kbase_device *kbdev,
  * Return: true if context is now active, false otherwise (ie if context does
  *	   not have an address space assigned)
  */
-bool kbase_backend_use_ctx_sched(struct kbase_device *kbdev,
-					struct kbase_context *kctx, int js);
+bool kbase_backend_use_ctx_sched(struct kbase_device *kbdev, struct kbase_context *kctx,
+				 unsigned int js);
 
 /**
  * kbase_backend_release_ctx_irq - Release a context from the GPU. This will
@@ -110,8 +105,7 @@ bool kbase_backend_use_ctx_sched(struct kbase_device *kbdev,
  *
  * Caller must hold kbase_device->mmu_hw_mutex and hwaccess_lock
  */
-void kbase_backend_release_ctx_irq(struct kbase_device *kbdev,
-				struct kbase_context *kctx);
+void kbase_backend_release_ctx_irq(struct kbase_device *kbdev, struct kbase_context *kctx);
 
 /**
  * kbase_backend_release_ctx_noirq - Release a context from the GPU. This will
@@ -124,8 +118,7 @@ void kbase_backend_release_ctx_irq(struct kbase_device *kbdev,
  * This function must perform any operations that could not be performed in IRQ
  * context by kbase_backend_release_ctx_irq().
  */
-void kbase_backend_release_ctx_noirq(struct kbase_device *kbdev,
-						struct kbase_context *kctx);
+void kbase_backend_release_ctx_noirq(struct kbase_device *kbdev, struct kbase_context *kctx);
 
 /**
  * kbase_backend_cache_clean - Perform a cache clean if the given atom requires
@@ -136,9 +129,7 @@ void kbase_backend_release_ctx_noirq(struct kbase_device *kbdev,
  * On some GPUs, the GPU cache must be cleaned following a failed atom. This
  * function performs a clean if it is required by @katom.
  */
-void kbase_backend_cache_clean(struct kbase_device *kbdev,
-		struct kbase_jd_atom *katom);
-
+void kbase_backend_cache_clean(struct kbase_device *kbdev, struct kbase_jd_atom *katom);
 
 /**
  * kbase_backend_complete_wq() - Perform backend-specific actions required on
@@ -151,9 +142,9 @@ void kbase_backend_cache_clean(struct kbase_device *kbdev,
  *
  * Return: true if atom has completed, false if atom should be re-submitted
  */
-void kbase_backend_complete_wq(struct kbase_device *kbdev,
-				struct kbase_jd_atom *katom);
+void kbase_backend_complete_wq(struct kbase_device *kbdev, struct kbase_jd_atom *katom);
 
+#if !MALI_USE_CSF
 /**
  * kbase_backend_complete_wq_post_sched - Perform backend-specific actions
  *                                        required on completing an atom, after
@@ -164,8 +155,8 @@ void kbase_backend_complete_wq(struct kbase_device *kbdev,
  * This function should only be called from kbase_jd_done_worker() or
  * js_return_worker().
  */
-void kbase_backend_complete_wq_post_sched(struct kbase_device *kbdev,
-		base_jd_core_req core_req);
+void kbase_backend_complete_wq_post_sched(struct kbase_device *kbdev, base_jd_core_req core_req);
+#endif /* !MALI_USE_CSF */
 
 /**
  * kbase_backend_reset() - The GPU is being reset. Cancel all jobs on the GPU
@@ -181,10 +172,9 @@ void kbase_backend_reset(struct kbase_device *kbdev, ktime_t *end_timestamp);
  * @kbdev: Device pointer
  * @js:    Job slot to inspect
  *
- * Return : Atom currently at the head of slot @js, or NULL
+ * Return: Atom currently at the head of slot @js, or NULL
  */
-struct kbase_jd_atom *kbase_backend_inspect_tail(struct kbase_device *kbdev,
-					int js);
+struct kbase_jd_atom *kbase_backend_inspect_tail(struct kbase_device *kbdev, unsigned int js);
 
 /**
  * kbase_backend_nr_atoms_on_slot() - Return the number of atoms currently on a
@@ -192,9 +182,9 @@ struct kbase_jd_atom *kbase_backend_inspect_tail(struct kbase_device *kbdev,
  * @kbdev:	Device pointer
  * @js:		Job slot to inspect
  *
- * Return : Number of atoms currently on slot
+ * Return: Number of atoms currently on slot
  */
-int kbase_backend_nr_atoms_on_slot(struct kbase_device *kbdev, int js);
+int kbase_backend_nr_atoms_on_slot(struct kbase_device *kbdev, unsigned int js);
 
 /**
  * kbase_backend_nr_atoms_submitted() - Return the number of atoms on a slot
@@ -202,9 +192,9 @@ int kbase_backend_nr_atoms_on_slot(struct kbase_device *kbdev, int js);
  * @kbdev:	Device pointer
  * @js:		Job slot to inspect
  *
- * Return : Number of atoms currently on slot @js that are currently on the GPU.
+ * Return: Number of atoms currently on slot @js that are currently on the GPU.
  */
-int kbase_backend_nr_atoms_submitted(struct kbase_device *kbdev, int js);
+u32 kbase_backend_nr_atoms_submitted(struct kbase_device *kbdev, unsigned int js);
 
 /**
  * kbase_backend_ctx_count_changed() - Number of contexts ready to submit jobs
@@ -231,20 +221,19 @@ void kbase_backend_timeouts_changed(struct kbase_device *kbdev);
  * @kbdev:	Device pointer
  * @js:		Job slot to inspect
  *
- * Return : Number of jobs that can be submitted.
+ * Return: Number of jobs that can be submitted.
  */
-int kbase_backend_slot_free(struct kbase_device *kbdev, int js);
+int kbase_backend_slot_free(struct kbase_device *kbdev, unsigned int js);
 
 /**
- * kbase_job_check_enter_disjoint - potentially leave disjoint state
+ * kbase_job_check_leave_disjoint - potentially leave disjoint state
  * @kbdev: kbase device
  * @target_katom: atom which is finishing
  *
  * Work out whether to leave disjoint state when finishing an atom that was
  * originated by kbase_job_check_enter_disjoint().
  */
-void kbase_job_check_leave_disjoint(struct kbase_device *kbdev,
-		struct kbase_jd_atom *target_katom);
+void kbase_job_check_leave_disjoint(struct kbase_device *kbdev, struct kbase_jd_atom *target_katom);
 
 /**
  * kbase_backend_jm_kill_running_jobs_from_kctx - Kill all jobs that are
@@ -287,8 +276,8 @@ u32 kbase_backend_get_current_flush_id(struct kbase_device *kbdev);
  * Context:
  *   The job slot lock must be held when calling this function.
  */
-void kbase_job_slot_hardstop(struct kbase_context *kctx, int js,
-				struct kbase_jd_atom *target_katom);
+void kbase_job_slot_hardstop(struct kbase_context *kctx, unsigned int js,
+			     struct kbase_jd_atom *target_katom);
 
 /**
  * kbase_gpu_atoms_submitted_any() - Inspect whether there are any atoms
@@ -298,5 +287,22 @@ void kbase_job_slot_hardstop(struct kbase_context *kctx, int js,
  * Return: true if there are any atoms on the GPU, false otherwise
  */
 bool kbase_gpu_atoms_submitted_any(struct kbase_device *kbdev);
+
+/**
+ * kbase_backend_slot_kctx_purge_locked - Perform a purge on the slot_rb tracked
+ *                                        kctx
+ *
+ * @kbdev:	Device pointer
+ * @kctx:	The kbase context that needs to be purged from slot_rb[]
+ *
+ * For JM GPUs, the L1 read only caches may need a start_flush invalidation,
+ * potentially on all slots (even if the kctx was only using a single slot),
+ * following a context termination or address-space ID recycle. This function
+ * performs a clean-up purge on the given kctx which if it has been tracked by
+ * slot_rb[] objects.
+ *
+ * Caller must hold kbase_device->hwaccess_lock.
+ */
+void kbase_backend_slot_kctx_purge_locked(struct kbase_device *kbdev, struct kbase_context *kctx);
 
 #endif /* _KBASE_HWACCESS_JM_H_ */

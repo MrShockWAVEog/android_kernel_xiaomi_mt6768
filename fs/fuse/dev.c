@@ -114,13 +114,6 @@ static void __fuse_put_request(struct fuse_req *req)
 	refcount_dec(&req->count);
 }
 
-static void fuse_req_init_context(struct fuse_conn *fc, struct fuse_req *req)
-{
-	req->in.h.uid = from_kuid_munged(&init_user_ns, current_fsuid());
-	req->in.h.gid = from_kgid_munged(&init_user_ns, current_fsgid());
-	req->in.h.pid = pid_nr_ns(task_pid(current), fc->pid_ns);
-}
-
 void fuse_set_initialized(struct fuse_conn *fc)
 {
 	/* Make sure stores before this are seen on another CPU */
@@ -179,11 +172,19 @@ static struct fuse_req *__fuse_get_req(struct fuse_conn *fc, unsigned npages,
 		goto out;
 	}
 
-	fuse_req_init_context(fc, req);
+	req->in.h.uid = from_kuid(fc->user_ns, current_fsuid());
+	req->in.h.gid = from_kgid(fc->user_ns, current_fsgid());
+	req->in.h.pid = pid_nr_ns(task_pid(current), fc->pid_ns);
+
 	__set_bit(FR_WAITING, &req->flags);
 	if (for_background)
 		__set_bit(FR_BACKGROUND, &req->flags);
 
+	if (unlikely(req->in.h.uid == ((uid_t)-1) ||
+		     req->in.h.gid == ((gid_t)-1))) {
+		fuse_put_request(fc, req);
+		return ERR_PTR(-EOVERFLOW);
+	}
 	return req;
 
  out:
@@ -272,7 +273,10 @@ struct fuse_req *fuse_get_req_nofail_nopages(struct fuse_conn *fc,
 	if (!req)
 		req = get_reserved_req(fc, file);
 
-	fuse_req_init_context(fc, req);
+	req->in.h.uid = from_kuid_munged(fc->user_ns, current_fsuid());
+	req->in.h.gid = from_kgid_munged(fc->user_ns, current_fsgid());
+	req->in.h.pid = pid_nr_ns(task_pid(current), fc->pid_ns);
+
 	__set_bit(FR_WAITING, &req->flags);
 	__clear_bit(FR_BACKGROUND, &req->flags);
 	return req;
@@ -475,11 +479,11 @@ static void request_wait_answer(struct fuse_conn *fc, struct fuse_req *req)
 
 	/*
 	 * Either request is already in userspace, or it was forced.
-	 * Wait it out.
+	 * Wait half of freeze_timeout_msecs to avoid getting stuck.
 	 */
 	while (!test_bit(FR_FINISHED, &req->flags))
-		wait_event_freezable(req->waitq,
-				test_bit(FR_FINISHED, &req->flags));
+		wait_event_freezable_timeout(req->waitq,
+			test_bit(FR_FINISHED, &req->flags), freeze_timeout_msecs / 2);
 }
 
 static void __fuse_request_send(struct fuse_conn *fc, struct fuse_req *req)
@@ -1114,6 +1118,7 @@ __releases(fiq->waitq.lock)
 	unsigned reqsize = sizeof(ih) + sizeof(arg);
 	int err;
 
+	list_del_init(&req->intr_entry);
 	req->intr_unique = fuse_get_unique(fiq);
 	memset(&ih, 0, sizeof(ih));
 	memset(&arg, 0, sizeof(arg));
@@ -1121,7 +1126,6 @@ __releases(fiq->waitq.lock)
 	ih.opcode = FUSE_INTERRUPT;
 	ih.unique = req->intr_unique;
 	arg.unique = req->in.h.unique;
-	list_del_init(&req->intr_entry);
 
 	spin_unlock(&fiq->waitq.lock);
 	if (nbytes < reqsize)
@@ -1309,12 +1313,6 @@ static ssize_t fuse_dev_do_read(struct fuse_dev *fud, struct file *file,
 	in = &req->in;
 	reqsize = in->h.len;
 
-	if (task_active_pid_ns(current) != fc->pid_ns) {
-		rcu_read_lock();
-		in->h.pid = pid_vnr(find_pid_ns(in->h.pid, fc->pid_ns));
-		rcu_read_unlock();
-	}
-
 	/* If request is too large, reply with an error and restart the read */
 	if (nbytes < reqsize) {
 		req->out.h.error = -EIO;
@@ -1346,6 +1344,7 @@ static ssize_t fuse_dev_do_read(struct fuse_dev *fud, struct file *file,
 	clear_bit(FR_LOCKED, &req->flags);
 	if (!fpq->connected) {
 		err = (fc->aborted && fc->abort_err) ? -ECONNABORTED : -ENODEV;
+		req->out.h.error = err;
 		goto out_end;
 	}
 	if (err) {
@@ -2289,25 +2288,23 @@ static long fuse_dev_ioctl(struct file *file, unsigned int cmd,
 {
 	int res;
 	int oldfd;
-	struct fuse_dev *fud;
-	struct fuse_passthrough_out pto;
+	struct fuse_dev *fud = NULL;
 
 	switch (cmd) {
 	case FUSE_DEV_IOC_CLONE:
 		res = -EFAULT;
-		if (!get_user(oldfd, (__u32 __user *)arg)){
+		if (!get_user(oldfd, (__u32 __user *)arg)) {
 			struct file *old = fget(oldfd);
+
 			res = -EINVAL;
 			if (old) {
-				fud = NULL;
-
 				/*
 				 * Check against file->f_op because CUSE
 				 * uses the same ioctl handler.
 				 */
 				if (old->f_op == file->f_op &&
-				   			old->f_cred->user_ns ==
-								file->f_cred->user_ns)
+				    old->f_cred->user_ns ==
+					    file->f_cred->user_ns)
 					fud = fuse_get_dev(old);
 
 				if (fud) {
@@ -2321,13 +2318,11 @@ static long fuse_dev_ioctl(struct file *file, unsigned int cmd,
 		break;
 	case FUSE_DEV_IOC_PASSTHROUGH_OPEN:
 		res = -EFAULT;
-		if (!copy_from_user(&pto,
-					(struct fuse_passthrough_out __user *)arg,
-					sizeof(pto))) {
+		if (!get_user(oldfd, (__u32 __user *)arg)) {
 			res = -EINVAL;
 			fud = fuse_get_dev(file);
 			if (fud)
-				res = fuse_passthrough_open(fud, &pto);
+				res = fuse_passthrough_open(fud, oldfd);
 		}
 		break;
 	default:

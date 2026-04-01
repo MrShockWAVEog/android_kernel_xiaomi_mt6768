@@ -89,8 +89,8 @@
 #define FTS_COORDS_ARR_SIZE 4
 #define FTS_X_MIN_DISPLAY_DEFAULT 0
 #define FTS_Y_MIN_DISPLAY_DEFAULT 0
-#define FTS_X_MAX_DISPLAY_DEFAULT 720
-#define FTS_Y_MAX_DISPLAY_DEFAULT 1280
+#define FTS_X_MAX_DISPLAY_DEFAULT 1080
+#define FTS_Y_MAX_DISPLAY_DEFAULT 2340
 
 #define FTS_TOUCH_DOWN 0
 #define FTS_TOUCH_UP 1
@@ -123,11 +123,6 @@ struct fts_ts_platform_data {
   u32 keys[FTS_MAX_KEYS];
   u32 key_y_coords[FTS_MAX_KEYS];
   u32 key_x_coords[FTS_MAX_KEYS];
-  u32 x_max;
-  u32 y_max;
-  u32 x_min;
-  u32 y_min;
-  u32 max_touch_number;
 };
 
 struct ts_event {

@@ -1,11 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
 /*
  *
- * (C) COPYRIGHT 2014, 2017 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2014-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
- *
- * SPDX-License-Identifier: GPL-2.0
  *
  */
 
@@ -55,9 +54,8 @@ fail_alloc:
 	return NULL;
 }
 
-int kutf_add_result(struct kutf_context *context,
-		enum kutf_result_status status,
-		const char *message)
+int kutf_add_result(struct kutf_context *context, enum kutf_result_status status,
+		    const char *message)
 {
 	struct kutf_mempool *mempool = &context->fixture_pool;
 	struct kutf_result_set *set = context->result_set;
@@ -90,7 +88,7 @@ int kutf_add_result(struct kutf_context *context,
 void kutf_destroy_result_set(struct kutf_result_set *set)
 {
 	if (!list_empty(&set->results))
-		pr_err("kutf_destroy_result_set: Unread results from test\n");
+		pr_err("%s: Unread results from test\n", __func__);
 
 	kfree(set);
 }
@@ -116,8 +114,7 @@ struct kutf_result *kutf_remove_result(struct kutf_result_set *set)
 	int ret;
 
 	do {
-		ret = wait_event_interruptible(set->waitq,
-				kutf_has_result(set));
+		ret = wait_event_interruptible(set->waitq, kutf_has_result(set));
 
 		if (ret)
 			return ERR_PTR(ret);
@@ -125,15 +122,11 @@ struct kutf_result *kutf_remove_result(struct kutf_result_set *set)
 		spin_lock(&kutf_result_lock);
 
 		if (!list_empty(&set->results)) {
-			result = list_first_entry(&set->results,
-					struct kutf_result,
-					node);
+			result = list_first_entry(&set->results, struct kutf_result, node);
 			list_del(&result->node);
 		} else if (set->flags & KUTF_RESULT_SET_WAITING_FOR_INPUT) {
 			/* Return a fake result */
-			static struct kutf_result waiting = {
-				.status = KUTF_RESULT_USERDATA_WAIT
-			};
+			static struct kutf_result waiting = { .status = KUTF_RESULT_USERDATA_WAIT };
 			result = &waiting;
 		}
 		/* If result == NULL then there was a race with the event

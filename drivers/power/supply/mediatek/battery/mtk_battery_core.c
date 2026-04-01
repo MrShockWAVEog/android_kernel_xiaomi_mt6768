@@ -2403,6 +2403,10 @@ void fg_drv_update_hw_status(void)
 
 int battery_update_routine(void *x)
 {
+	struct sched_param param = { .sched_priority = 0 };
+	sched_setscheduler(current, SCHED_IDLE, &param);
+	set_task_ioprio(current, IOPRIO_PRIO_VALUE(IOPRIO_CLASS_IDLE, 0));
+
 	battery_update_psd(&battery_main);
 	while (1) {
 		wait_event(gm.wait_que,

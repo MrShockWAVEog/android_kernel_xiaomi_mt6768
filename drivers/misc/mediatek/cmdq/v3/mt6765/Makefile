@@ -23,7 +23,7 @@ ccflags-y += -DCMDQ_MDP_COLOR
 endif
 
 # Enable MET
-ccflags-y += -DMET_USER_EVENT_SUPPORT
+ccflags-$(CONFIG_MTK_MET) += -DMET_USER_EVENT_SUPPORT
 
 ifeq ($(CONFIG_MTK_AEE_FEATURE),y)
 # Enable AEE

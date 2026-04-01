@@ -24,6 +24,6 @@ ccflags-y += -DCMDQ_MDP_COLOR
 endif
 
 # Enable MET
-ccflags-y += -DMET_USER_EVENT_SUPPORT
+ccflags-$(CONFIG_MTK_MET) += -DMET_USER_EVENT_SUPPORT
 
 obj-y += cmdq_mdp.o

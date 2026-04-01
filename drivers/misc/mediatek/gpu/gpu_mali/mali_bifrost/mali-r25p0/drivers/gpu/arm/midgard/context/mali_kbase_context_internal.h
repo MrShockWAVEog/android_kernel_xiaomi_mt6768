@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *
- * (C) COPYRIGHT ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2019-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,16 +17,6 @@
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
  *
- * SPDX-License-Identifier: GPL-2.0
- *
- *//* SPDX-License-Identifier: GPL-2.0 */
-/*
- * (C) COPYRIGHT 2019 ARM Limited. All rights reserved.
- *
- * This program is free software and is provided to you under the terms of the
- * GNU General Public License version 2 as published by the Free Software
- * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
  */
 
 #include <mali_kbase.h>
@@ -45,6 +36,14 @@ struct kbase_context_init {
 	char *err_mes;
 };
 
+/**
+ * kbase_context_common_init() - Initialize kbase context
+ * @kctx:   Pointer to the kbase context to be initialized.
+ *
+ * This function must be called only when a kbase context is instantiated.
+ *
+ * Return: 0 on success.
+ */
 int kbase_context_common_init(struct kbase_context *kctx);
 void kbase_context_common_term(struct kbase_context *kctx);
 
@@ -58,3 +57,6 @@ int kbase_context_mem_alloc_page(struct kbase_context *kctx);
 void kbase_context_mem_pool_free(struct kbase_context *kctx);
 
 void kbase_context_sticky_resource_term(struct kbase_context *kctx);
+
+int kbase_context_add_to_dev_list(struct kbase_context *kctx);
+void kbase_context_remove_from_dev_list(struct kbase_context *kctx);

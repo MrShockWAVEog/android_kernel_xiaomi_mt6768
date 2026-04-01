@@ -59,14 +59,13 @@ static void fts_prc_func(struct work_struct *work) {
   struct input_dev *input_dev = ts_data->input_dev;
 #if FTS_MT_PROTOCOL_B_EN
   u32 finger_count = 0;
-  u32 max_touches = fts_data->pdata->max_touch_number;
 #endif
 
   FTS_FUNC_ENTER();
   mutex_lock(&ts_data->report_mutex);
 
 #if FTS_MT_PROTOCOL_B_EN
-  for (finger_count = 0; finger_count < max_touches; finger_count++) {
+  for (finger_count = 0; finger_count < FTS_MAX_POINTS_SUPPORT; finger_count++) {
     input_mt_slot(input_dev, finger_count);
     input_mt_report_slot_state(input_dev, MT_TOOL_FINGER, false);
   }

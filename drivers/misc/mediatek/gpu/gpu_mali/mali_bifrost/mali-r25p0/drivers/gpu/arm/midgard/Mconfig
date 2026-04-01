@@ -1,16 +1,22 @@
+# SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
 #
-# (C) COPYRIGHT 2012-2020 ARM Limited. All rights reserved.
+# (C) COPYRIGHT 2012-2024 ARM Limited. All rights reserved.
 #
 # This program is free software and is provided to you under the terms of the
 # GNU General Public License version 2 as published by the Free Software
 # Foundation, and any use by you of this program is subject to the terms
-# of such GNU licence.
+# of such GNU license.
 #
-# A copy of the licence is included with the program, and can also be obtained
-# from Free Software Foundation, Inc.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, you can access it online at
+# http://www.gnu.org/licenses/gpl-2.0.html.
 #
 #
-
 
 menuconfig MALI_MIDGARD
 	bool "Mali Midgard series support"
@@ -20,52 +26,6 @@ menuconfig MALI_MIDGARD
 
 	  To compile this driver as a module, choose M here:
 	  this will generate a single module, called mali_kbase.
-
-config MALI_GATOR_SUPPORT
-	bool "Enable Streamline tracing support"
-	depends on MALI_MIDGARD && !BACKEND_USER
-	default y
-	help
-	  Enables kbase tracing used by the Arm Streamline Performance Analyzer.
-	  The tracepoints are used to derive GPU activity charts in Streamline.
-
-config MALI_MIDGARD_DVFS
-	bool "Enable legacy DVFS"
-	depends on MALI_MIDGARD && !MALI_DEVFREQ
-	default n
-	help
-	  Choose this option to enable legacy DVFS in the Mali Midgard DDK.
-
-config MALI_MIDGARD_ENABLE_TRACE
-	bool "Enable kbase tracing"
-	depends on MALI_MIDGARD
-	default y if MALI_DEBUG
-	default n
-	help
-	  Enables tracing in kbase.  Trace log available through
-	  the "mali_trace" debugfs file, when the CONFIG_DEBUG_FS is enabled
-
-config MALI_DEVFREQ
-	bool "devfreq support for Mali"
-	depends on MALI_MIDGARD
-	default y if PLATFORM_JUNO
-	default y if PLATFORM_CUSTOM
-	help
-	  Support devfreq for Mali.
-
-	  Using the devfreq framework and, by default, the simpleondemand
-	  governor, the frequency of Mali will be dynamically selected from the
-	  available OPPs.
-
-config MALI_DMA_FENCE
-	bool "DMA_BUF fence support for Mali"
-	depends on MALI_MIDGARD
-	default n
-	help
-	  Support DMA_BUF fences for Mali.
-
-	  This option should only be enabled if the Linux Kernel has built in
-	  support for DMA_BUF fences.
 
 config MALI_PLATFORM_NAME
 	depends on MALI_MIDGARD
@@ -81,6 +41,82 @@ config MALI_PLATFORM_NAME
 	  When PLATFORM_CUSTOM is set, this needs to be set manually to
 	  pick up the desired platform files.
 
+choice
+	prompt "Mali HW backend"
+	depends on MALI_MIDGARD
+	default MALI_NO_MALI if NO_MALI
+	default MALI_REAL_HW
+
+config MALI_REAL_HW
+	bool "Enable build of Mali kernel driver for real HW"
+	depends on MALI_MIDGARD
+	help
+	  This is the default HW backend.
+
+config MALI_NO_MALI
+	bool "Enable build of Mali kernel driver for No Mali"
+	depends on MALI_MIDGARD && MALI_EXPERT
+	help
+	  This can be used to test the driver in a simulated environment
+	  whereby the hardware is not physically present. If the hardware is physically
+	  present it will not be used. This can be used to test the majority of the
+	  driver without needing actual hardware or for software benchmarking.
+	  All calls to the simulated hardware will complete immediately as if the hardware
+	  completed the task.
+
+endchoice
+
+config MALI_IS_FPGA
+	bool "Enable build of Mali kernel driver for FPGA"
+	depends on MALI_MIDGARD
+	default n
+	default y if PLATFORM_IS_FPGA
+	help
+	  This is the default HW backend.
+
+
+config MALI_CSF_SUPPORT
+	bool "Enable Mali CSF based GPU support"
+	depends on MALI_MIDGARD
+	default y if GPU_HAS_CSF
+	help
+	  Enables support for CSF based GPUs.
+
+config MALI_DEVFREQ
+	bool "Enable devfreq support for Mali"
+	depends on MALI_MIDGARD
+	default y
+	help
+	  Support devfreq for Mali.
+
+	  Using the devfreq framework and, by default, the simple on-demand
+	  governor, the frequency of Mali will be dynamically selected from the
+	  available OPPs.
+
+config MALI_MIDGARD_DVFS
+	bool "Enable legacy DVFS"
+	depends on MALI_MIDGARD && !MALI_DEVFREQ
+	default n
+	help
+	  Choose this option to enable legacy DVFS in the Mali Midgard DDK.
+
+config MALI_GATOR_SUPPORT
+	bool "Enable Streamline tracing support"
+	depends on MALI_MIDGARD && !BACKEND_USER
+	default y
+	help
+	  Enables kbase tracing used by the Arm Streamline Performance Analyzer.
+	  The tracepoints are used to derive GPU activity charts in Streamline.
+
+config MALI_MIDGARD_ENABLE_TRACE
+	bool "Enable kbase tracing"
+	depends on MALI_MIDGARD
+	default y if MALI_DEBUG
+	default n
+	help
+	  Enables tracing in kbase. Trace log available through
+	  the "mali_trace" debugfs file, when the CONFIG_DEBUG_FS is enabled
+
 config MALI_ARBITER_SUPPORT
 	bool "Enable arbiter support for Mali"
 	depends on MALI_MIDGARD
@@ -92,18 +128,53 @@ config MALI_ARBITER_SUPPORT
 
 	  If unsure, say N.
 
-# MALI_EXPERT configuration options
+config DMA_BUF_SYNC_IOCTL_SUPPORTED
+	bool "Enable Kernel DMA buffers support DMA_BUF_IOCTL_SYNC"
+	depends on MALI_MIDGARD && BACKEND_KERNEL
+	default y
+
+config MALI_DMA_BUF_MAP_ON_DEMAND
+	bool "Enable map imported dma-bufs on demand"
+	depends on MALI_MIDGARD
+	default n
+	default y if !DMA_BUF_SYNC_IOCTL_SUPPORTED
+	help
+	  This option will cause kbase to set up the GPU mapping of imported
+	  dma-buf when needed to run atoms. This is the legacy behavior.
+
+	  This is intended for testing and the option will get removed in the
+	  future.
+
+config MALI_DMA_BUF_LEGACY_COMPAT
+	bool "Enable legacy compatibility cache flush on dma-buf map"
+	depends on MALI_MIDGARD && !MALI_DMA_BUF_MAP_ON_DEMAND
+	default n
+	help
+	  This option enables compatibility with legacy dma-buf mapping
+	  behavior, then the dma-buf is mapped on import, by adding cache
+	  maintenance where MALI_DMA_BUF_MAP_ON_DEMAND would do the mapping,
+	  including a cache flush.
+
+	  This option might work-around issues related to missing cache
+	  flushes in other drivers. This only has an effect for clients using
+	  UK 11.18 or older. For later UK versions it is not possible.
+
+config MALI_CORESIGHT
+	depends on MALI_MIDGARD && MALI_CSF_SUPPORT && !NO_MALI
+	select CSFFW_DEBUG_FW_AS_RW
+	bool "Enable Kbase CoreSight tracing support"
+	default n
 
 menuconfig MALI_EXPERT
 	depends on MALI_MIDGARD
 	bool "Enable Expert Settings"
 	default y
 	help
-	  Enabling this option and modifying the default settings may produce a driver with performance or
-	  other limitations.
+	  Enabling this option and modifying the default settings may produce
+	  a driver with performance or other limitations.
 
 config MALI_CORESTACK
-	bool "Support controlling power to the GPU core stack"
+	bool "Enable support of GPU core stack power control"
 	depends on MALI_MIDGARD && MALI_EXPERT
 	default n
 	help
@@ -115,16 +186,48 @@ config MALI_CORESTACK
 
 	  If unsure, say N.
 
+config LARGE_PAGE_SUPPORT
+	bool "Support for 2MB page allocations"
+	depends on BACKEND_KERNEL
+	default y
+	help
+	  Rather than allocating all GPU memory page-by-page, allow the system
+	  to decide whether to attempt to allocate 2MB pages from the kernel.
+	  This reduces TLB pressure and helps to prevent memory fragmentation.
+
+	  Note that this option only enables the support for the module parameter
+	  and does not necessarily mean that 2MB pages will be used automatically.
+	  This depends on GPU support.
+
+	  If in doubt, say Y.
+
 config MALI_DEBUG
-	bool "Debug build"
+	bool "Enable debug build"
 	depends on MALI_MIDGARD && MALI_EXPERT
 	default y if DEBUG
 	default n
 	help
 	  Select this option for increased checking and reporting of errors.
 
+config MALI_GCOV_KERNEL
+	bool "Enable branch coverage via gcov"
+	depends on MALI_MIDGARD && MALI_DEBUG
+	default n
+	help
+	  Choose this option to enable building kbase with branch
+	  coverage information. When built against a supporting kernel,
+	  the coverage information will be available via debugfs.
+
+config MALI_KCOV
+	bool "Enable kcov coverage to support fuzzers"
+	depends on MALI_MIDGARD && MALI_DEBUG
+	default n
+	help
+	  Choose this option to enable building with fuzzing-oriented
+	  coverage, to improve the random test cases that are generated.
+
 config MALI_FENCE_DEBUG
-	bool "Debug sync fence usage"
+	bool "Enable debug sync fence usage"
 	depends on MALI_MIDGARD && MALI_EXPERT
 	default y if MALI_DEBUG
 	help
@@ -140,41 +243,6 @@ config MALI_FENCE_DEBUG
 	  The timeout can be changed at runtime through the js_soft_timeout
 	  device attribute, where the timeout is specified in milliseconds.
 
-choice
-	prompt "Error injection level"
-	default MALI_ERROR_INJECT_NONE
-	help
-	  Enables insertion of errors to test module failure and recovery mechanisms.
-
-config MALI_ERROR_INJECT_NONE
-	bool "disabled"
-	help
-	  Error injection is disabled.
-
-config MALI_ERROR_INJECT_TRACK_LIST
-	bool "error track list"
-	depends on MALI_MIDGARD && MALI_EXPERT && NO_MALI
-	help
-	  Errors to inject are pre-configured by the user.
-
-config MALI_ERROR_INJECT_RANDOM
-	bool "random error injection"
-	depends on MALI_MIDGARD && MALI_EXPERT && NO_MALI
-	help
-	  Injected errors are random, rather than user-driven.
-
-endchoice
-
-config MALI_ERROR_INJECT_ON
-	string
-	default "0" if MALI_ERROR_INJECT_NONE
-	default "1" if MALI_ERROR_INJECT_TRACK_LIST
-	default "2" if MALI_ERROR_INJECT_RANDOM
-
-config MALI_ERROR_INJECT
-	bool
-	default y if !MALI_ERROR_INJECT_NONE
-
 config MALI_SYSTEM_TRACE
 	bool "Enable system event tracing support"
 	depends on MALI_MIDGARD && MALI_EXPERT
@@ -186,56 +254,35 @@ config MALI_SYSTEM_TRACE
 	  minimal overhead when not in use. Enable only if you know what
 	  you are doing.
 
-config MALI_2MB_ALLOC
-	bool "Attempt to allocate 2MB pages"
+# Instrumentation options.
+
+# config MALI_PRFCNT_SET_PRIMARY exists in the Kernel Kconfig but is configured using CINSTR_PRIMARY_HWC in Mconfig.
+# config MALI_PRFCNT_SET_SECONDARY exists in the Kernel Kconfig but is configured using CINSTR_SECONDARY_HWC in Mconfig.
+# config MALI_PRFCNT_SET_TERTIARY exists in the Kernel Kconfig but is configured using CINSTR_TERTIARY_HWC in Mconfig.
+# config MALI_PRFCNT_SET_SELECT_VIA_DEBUG_FS exists in the Kernel Kconfig but is configured using CINSTR_HWC_SET_SELECT_VIA_DEBUG_FS in Mconfig.
+
+config MALI_JOB_DUMP
+	bool "Enable system level support needed for job dumping"
 	depends on MALI_MIDGARD && MALI_EXPERT
 	default n
 	help
-	  Rather than allocating all GPU memory page-by-page, attempt to
-	  allocate 2MB pages from the kernel. This reduces TLB pressure and
-	  helps to prevent memory fragmentation.
-
-	  If in doubt, say N
+	  Choose this option to enable system level support needed for
+	  job dumping. This is typically used for instrumentation but has
+	  minimal overhead when not in use. Enable only if you know what
+	  you are doing.
 
 config MALI_PWRSOFT_765
-	bool "PWRSOFT-765 ticket"
+	bool "Enable workaround for PWRSOFT-765"
 	depends on MALI_MIDGARD && MALI_EXPERT
 	default n
 	help
-	  PWRSOFT-765 fixes devfreq cooling devices issues. However, they are
-	  not merged in mainline kernel yet. So this define helps to guard those
-	  parts of the code.
+	  PWRSOFT-765 fixes devfreq cooling devices issues. The fix was merged
+	  in kernel v4.10, however if backported into the kernel then this
+	  option must be manually selected.
 
-config MALI_MEMORY_FULLY_BACKED
-	bool "Memory fully physically-backed"
-	default n
-	help
-	  This option enables full backing of all virtual memory allocations
-	  for the kernel. This only affects grow-on-GPU-page-fault memory.
+	  If using kernel >= v4.10 then say N, otherwise if devfreq cooling
+	  changes have been backported say Y to avoid compilation errors.
 
-config MALI_DMA_BUF_MAP_ON_DEMAND
-	bool "Map imported dma-bufs on demand"
-	depends on MALI_MIDGARD
-	default n
-	default y if !DMA_BUF_SYNC_IOCTL_SUPPORTED
-	help
-	  This option caused kbase to set up the GPU mapping of imported
-	  dma-buf when needed to run atoms.  This is the legacy behaviour.
-
-config MALI_DMA_BUF_LEGACY_COMPAT
-	bool "Enable legacy compatibility cache flush on dma-buf map"
-	depends on MALI_MIDGARD && !MALI_DMA_BUF_MAP_ON_DEMAND
-	default n
-	help
-	  This option enables compatibility with legacy dma-buf mapping
-	  behavior, then the dma-buf is mapped on import, by adding cache
-	  maintenance where MALI_DMA_BUF_MAP_ON_DEMAND would do the mapping,
-	  including a cache flush.
-
-config MALI_REAL_HW
-	bool
-	default y
-	default n if NO_MALI
 
 config MALI_HW_ERRATA_1485982_NOT_AFFECTED
 	bool "Disable workaround for BASE_HW_ISSUE_GPU2017_1336"
@@ -261,17 +308,45 @@ config MALI_HW_ERRATA_1485982_USE_CLOCK_ALTERNATIVE
 	  tree using the property, opp-mali-errata-1485982. Otherwise the
 	  slowest clock will be selected.
 
-config MALI_GEM5_BUILD
-	bool "Enable build of Mali kernel driver for GEM5"
+config MALI_TRACE_POWER_GPU_WORK_PERIOD
+	bool "Enable per-application GPU metrics tracepoints"
 	depends on MALI_MIDGARD
-	default n
+	default y
 	help
-	  This option is to do a Mali GEM5 build.
+	  This option enables per-application GPU metrics tracepoints.
+
 	  If unsure, say N.
 
-# Instrumentation options.
+choice
+	prompt "CSF Firmware trace mode"
+	depends on MALI_MIDGARD
+	default MALI_FW_TRACE_MODE_MANUAL
+	help
+	  CSF Firmware log operating mode.
 
-# config MALI_JOB_DUMP exists in the Kernel Kconfig but is configured using CINSTR_JOB_DUMP in Mconfig.
-# config MALI_PRFCNT_SET_SECONDARY exists in the Kernel Kconfig but is configured using CINSTR_SECONDARY_HWC in Mconfig.
+config MALI_FW_TRACE_MODE_MANUAL
+	bool "manual mode"
+	depends on MALI_MIDGARD
+	help
+	  firmware log can be read manually by the userspace (and it will
+	  also be dumped automatically into dmesg on GPU reset).
 
+config MALI_FW_TRACE_MODE_AUTO_PRINT
+	bool "automatic printing mode"
+	depends on MALI_MIDGARD
+	help
+	  firmware log will be periodically emptied into dmesg, manual
+	  reading through debugfs is disabled.
+
+config MALI_FW_TRACE_MODE_AUTO_DISCARD
+	bool "automatic discarding mode"
+	depends on MALI_MIDGARD
+	help
+	  firmware log will be periodically discarded, the remaining log can be
+	  read manually by the userspace (and it will also be dumped
+	  automatically into dmesg on GPU reset).
+
+endchoice
+
+source "kernel/drivers/gpu/arm/arbitration/Mconfig"
 source "kernel/drivers/gpu/arm/midgard/tests/Mconfig"

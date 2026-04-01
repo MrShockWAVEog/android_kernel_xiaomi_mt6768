@@ -13,3 +13,8 @@ config TOUCHSCREEN_FTS_DIRECTORY
 	string "Focaltech ts directory name"
 	default "FT8719"
 	depends on TOUCHSCREEN_FT8719
+
+config TOUCHSCREEN_FT8719_DEBUG
+	bool "Focaltech tp data dump"
+	default n
+	depends on TOUCHSCREEN_FT8719

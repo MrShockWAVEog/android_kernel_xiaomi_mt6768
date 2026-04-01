@@ -161,9 +161,7 @@ obj-$(CONFIG_MEDIATEK_SOLUTION) += cmo/
 obj-$(CONFIG_MTK_VOW_SUPPORT)  += vow/
 obj-y += io_boost/
 obj-y += mtprintk/
-ifneq ($(wildcard $(srctree)/drivers/misc/mediatek/met_drv/),)
-obj-y += met_drv/
-endif
+obj-$(CONFIG_MTK_MET) += met_drv/
 obj-y += perf/
 obj-$(CONFIG_MTK_JPEG) += jpeg/
 obj-$(CONFIG_MTK_SPMTWAM) += twam/

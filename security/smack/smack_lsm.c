@@ -2912,6 +2912,19 @@ static int smack_shm_alloc_security(struct kern_ipc_perm *shp)
 }
 
 /**
+ * smack_shm_free_security - Clear the security blob for shm
+ * @shp: the object
+ *
+ * Clears the blob pointer
+ */
+static void smack_shm_free_security(struct kern_ipc_perm *shp)
+{
+	struct kern_ipc_perm *isp = shp;
+
+	isp->security = NULL;
+}
+
+/**
  * smk_curacc_shm : check if current has access on shm
  * @shp : the object
  * @access : access requested
@@ -3145,6 +3158,19 @@ static int smack_msg_queue_alloc_security(struct kern_ipc_perm *msq)
 
 	kisp->security = skp;
 	return 0;
+}
+
+/**
+ * smack_msg_free_security - Clear the security blob for msg
+ * @msq: the object
+ *
+ * Clears the blob pointer
+ */
+static void smack_msg_queue_free_security(struct kern_ipc_perm *msq)
+{
+	struct kern_ipc_perm *kisp = msq;
+
+	kisp->security = NULL;
 }
 
 /**

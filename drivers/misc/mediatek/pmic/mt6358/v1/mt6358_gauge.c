@@ -3388,6 +3388,7 @@ static struct gauge_ops mt6358_gauge_ops = {
 
 static int mt6358_parse_dt(struct mt6358_gauge *info, struct device *dev)
 {
+#if 0
 	struct device_node *np = dev->of_node;
 
 	bm_err("%s: starts\n", __func__);
@@ -3402,6 +3403,8 @@ static int mt6358_parse_dt(struct mt6358_gauge *info, struct device *dev)
 		bm_err("%s: no charger name\n", __func__);
 		info->gauge_dev_name = "gauge";
 	}
+#endif
+	info->gauge_dev_name = "gauge";
 
 	return 0;
 }

@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *
- * (C) COPYRIGHT 2014-2018 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2014-2018, 2020-2022 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,10 +17,7 @@
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
  *
- * SPDX-License-Identifier: GPL-2.0
- *
  */
-
 
 /*
  * Register-based HW access backend specific APIs
@@ -42,8 +40,7 @@
  *
  * Return: true if job evicted from NEXT registers, false otherwise
  */
-bool kbase_gpu_irq_evict(struct kbase_device *kbdev, int js,
-				u32 completion_code);
+bool kbase_gpu_irq_evict(struct kbase_device *kbdev, unsigned int js, u32 completion_code);
 
 /**
  * kbase_gpu_complete_hw - Complete an atom on job slot js
@@ -55,10 +52,8 @@ bool kbase_gpu_irq_evict(struct kbase_device *kbdev, int js,
  *                   completed
  * @end_timestamp:   Time of completion
  */
-void kbase_gpu_complete_hw(struct kbase_device *kbdev, int js,
-				u32 completion_code,
-				u64 job_tail,
-				ktime_t *end_timestamp);
+void kbase_gpu_complete_hw(struct kbase_device *kbdev, unsigned int js, u32 completion_code,
+			   u64 job_tail, ktime_t *end_timestamp);
 
 /**
  * kbase_gpu_inspect - Inspect the contents of the HW access ringbuffer
@@ -70,8 +65,7 @@ void kbase_gpu_complete_hw(struct kbase_device *kbdev, int js,
  * Return:  The atom at that position in the ringbuffer
  *          or NULL if no atom present
  */
-struct kbase_jd_atom *kbase_gpu_inspect(struct kbase_device *kbdev, int js,
-					int idx);
+struct kbase_jd_atom *kbase_gpu_inspect(struct kbase_device *kbdev, unsigned int js, int idx);
 
 /**
  * kbase_gpu_dump_slots - Print the contents of the slot ringbuffers

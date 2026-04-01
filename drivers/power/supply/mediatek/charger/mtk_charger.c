@@ -521,7 +521,9 @@ int _charger_manager_set_input_current_limit(struct charger_manager *info,
 			pdata->thermal_input_current_limit = input_current;
 		}
 
+#ifdef CONFIG_MTK_ENG_BUILD
 		chr_err("%s: idx:%d en:%d\n", __func__, idx, input_current);
+#endif
 		_mtk_charger_change_current_setting(info);
 		_wake_up_charger(info);
 		return 0;
@@ -2087,6 +2089,7 @@ static int charger_routine_thread(void *arg)
 		bat_current = battery_get_bat_current();
 		chg_current = pmic_get_charging_current();
 		hvdcp_vbus_check(info);
+#ifdef CONFIG_MTK_ENG_BUILD
 		chr_err("Vbat=%d,Ibat=%d,I=%d,VChr=%d,T=%d,Soc=%d:%d,CT:%d:%d hv:%d pd:%d:%d\n",
 			battery_get_bat_voltage(), bat_current, chg_current,
 			battery_get_vbus(), battery_get_bat_temperature(),
@@ -2094,6 +2097,7 @@ static int charger_routine_thread(void *arg)
 			mt_get_charger_type(), info->chr_type,
 			info->enable_hv_charging, info->pd_type,
 			info->pd_reset);
+#endif
 
 		if (info->pd_reset == true) {
 			mtk_pe40_plugout_reset(info);

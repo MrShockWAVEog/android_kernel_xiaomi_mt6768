@@ -59,23 +59,18 @@ const struct of_device_id touch_of_match[] = {
 void tpd_get_dts_info(void)
 {
 	struct device_node *node1 = NULL;
+#if 0
 	int key_dim_local[16] = {0}, i = 0;
+#endif
 
 	node1 = of_find_matching_node(node1, touch_of_match);
 	if (node1) {
-		of_property_read_u32(node1,
-			"tpd-max-touch-num", &tpd_dts_data.touch_max_num);
-		of_property_read_u32(node1,
-			"use-tpd-button", &tpd_dts_data.use_tpd_button);
 		pr_debug("[tpd]use-tpd-button = %d\n",
-			tpd_dts_data.use_tpd_button);
-		if (of_property_read_u32_array(node1, "tpd-resolution",
-			tpd_dts_data.tpd_resolution,
-			ARRAY_SIZE(tpd_dts_data.tpd_resolution))) {
-			pr_debug("[tpd] resulution is %d %d",
-				tpd_dts_data.tpd_resolution[0],
-				tpd_dts_data.tpd_resolution[1]);
-		}
+			USE_TPD_BUTTON);
+		pr_debug("[tpd] resulution is %d %d",
+			TPD_RESOLUTION_WIDTH,
+			TPD_RESOLUTION_HEIGHT);
+#if 0
 		if (tpd_dts_data.use_tpd_button) {
 			of_property_read_u32(node1,
 				"tpd-key-num", &tpd_dts_data.tpd_key_num);
@@ -133,8 +128,9 @@ void tpd_get_dts_info(void)
 		}
 		memcpy(&tpd_filter,
 			&tpd_dts_data.touch_filter, sizeof(tpd_filter));
+#endif
 		pr_debug("[tpd]tpd-filter-enable = %d, pixel_density = %d\n",
-				tpd_filter.enable, tpd_filter.pixel_density);
+				TOUCH_FILTER, PIXEL_DENSITY);
 		tpd_dts_data.tpd_use_ext_gpio =
 			of_property_read_bool(node1, "tpd-use-ext-gpio");
 		of_property_read_u32(node1,
@@ -475,8 +471,9 @@ int tpd_driver_add(struct tpd_driver_t *tpd_drv)
 	/* check parameter */
 	if (tpd_drv == NULL)
 		return -1;
-	tpd_drv->tpd_have_button = tpd_dts_data.use_tpd_button;
+	tpd_drv->tpd_have_button = USE_TPD_BUTTON;
 	/* R-touch */
+#if 0
 	if (strcmp(tpd_drv->tpd_device_name, "generic") == 0) {
 		tpd_driver_list[0].tpd_device_name = tpd_drv->tpd_device_name;
 		tpd_driver_list[0].tpd_local_init = tpd_drv->tpd_local_init;
@@ -485,6 +482,7 @@ int tpd_driver_add(struct tpd_driver_t *tpd_drv)
 		tpd_driver_list[0].tpd_have_button = tpd_drv->tpd_have_button;
 		return 0;
 	}
+#endif
 	for (i = 1; i < TP_DRV_MAX_COUNT; i++) {
 		/* add tpd driver into list */
 		if (tpd_driver_list[i].tpd_device_name == NULL) {

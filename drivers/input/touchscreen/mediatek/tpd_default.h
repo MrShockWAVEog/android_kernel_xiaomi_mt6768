@@ -15,4 +15,11 @@
 #define TPD_FAT_TOUCH 120
 #endif
 
+#define TOUCH_MAX_NUM 10
+#define USE_TPD_BUTTON 0
+#define TPD_RESOLUTION_WIDTH 1080
+#define TPD_RESOLUTION_HEIGHT 2340
+#define TOUCH_FILTER 0
+#define PIXEL_DENSITY 168
+
 int tpd_trembling_tolerance(int t, int p);

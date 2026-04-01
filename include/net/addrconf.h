@@ -216,6 +216,33 @@ bool ipv6_chk_mcast_addr(struct net_device *dev, const struct in6_addr *group,
 
 void ipv6_mc_dad_complete(struct inet6_dev *idev);
 
+/* A stub used by vxlan module. This is ugly, ideally these
+ * symbols should be built into the core kernel.
+ */
+struct ipv6_stub {
+	int (*ipv6_sock_mc_join)(struct sock *sk, int ifindex,
+				 const struct in6_addr *addr);
+	int (*ipv6_sock_mc_drop)(struct sock *sk, int ifindex,
+				 const struct in6_addr *addr);
+	struct dst_entry *(*ipv6_dst_lookup_flow)(struct net *net,
+						  const struct sock *sk,
+						  struct flowi6 *fl6,
+						  const struct in6_addr *final_dst);
+	void (*udpv6_encap_enable)(void);
+	void (*ndisc_send_na)(struct net_device *dev, const struct in6_addr *daddr,
+			      const struct in6_addr *solicited_addr,
+			      bool router, bool solicited, bool override, bool inc_opt);
+	struct neigh_table *nd_tbl;
+};
+extern const struct ipv6_stub *ipv6_stub __read_mostly;
+
+/* A stub used by bpf helpers. Similarly ugly as ipv6_stub */
+struct ipv6_bpf_stub {
+	int (*inet6_bind)(struct sock *sk, struct sockaddr *uaddr, int addr_len,
+			  bool force_bind_address_no_port, bool with_lock);
+};
+extern const struct ipv6_bpf_stub *ipv6_bpf_stub __read_mostly;
+
 /*
  * identify MLD packets for MLD filter exceptions
  */

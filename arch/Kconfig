@@ -240,6 +240,10 @@ config ARCH_HAS_FORTIFY_SOURCE
 config ARCH_HAS_SET_MEMORY
 	bool
 
+# Select if arch has all set_direct_map_invalid/default() functions
+config ARCH_HAS_SET_DIRECT_MAP
+	bool
+
 config ARCH_HAS_CPU_FINALIZE_INIT
 	bool
 
@@ -347,6 +351,9 @@ config HAVE_RCU_TABLE_FREE
 	bool
 
 config HAVE_RCU_TABLE_INVALIDATE
+	bool
+
+config HAVE_MMU_GATHER_PAGE_SIZE
 	bool
 
 config ARCH_WANT_IRQS_OFF_ACTIVATE_MM
@@ -614,7 +621,7 @@ config THIN_ARCHIVES
 	  instead of ld -r to create the built-in.o files.
 
 config LD_DEAD_CODE_DATA_ELIMINATION
-	bool
+	bool "Dead code and data elimination (EXPERIMENTAL)"
 	help
 	  Select this if the architecture wants to do dead code and
 	  data elimination with the linker by compiling with

@@ -179,11 +179,13 @@ static void mt6358_irq_sp_handler(struct mt6358_chip *chip,
 				continue;
 			hwirq = sp_top_ints[sp].hwirq_base + 16 * i + j;
 			virq = irq_find_mapping(chip->irq_domain, hwirq);
+#ifdef CONFIG_MTK_ENG_BUILD
 			dev_info(chip->dev,
 				"Reg[0x%x]=0x%x,name=%s,hwirq=%d,type=%d\n",
 				sta_reg, sp_int_status,
 				pmic_irqs[hwirq].name, hwirq,
 				irq_get_trigger_type(virq));
+#endif
 			log_threaded_irq_wakeup_reason(virq, chip->irq);
 			if (virq)
 				handle_nested_irq(virq);

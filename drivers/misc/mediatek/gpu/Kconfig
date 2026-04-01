@@ -52,3 +52,48 @@ config MTK_GPU_SWPM_SUPPORT
 	default n
 	help
 	   config supports to make SWPM enable/disable GPU power model
+
+config MALI_NO_MALI
+	bool "test"
+	default n
+
+config MALI_REAL_HW
+	bool "test"
+	depends on !MALI_NO_MALI
+	default y if !MALI_NO_MALI
+
+config MALI_MIDGARD
+	bool "test"
+	default y if MALI_REAL_HW
+
+config MALI_DEVFREQ
+	bool "test"
+	default n
+
+config MALI_MIDGARD_DVFS
+	bool "test"
+	depends on !MALI_DEVFREQ
+	default y if MALI_MIDGARD
+
+config MALI_CSF_SUPPORT
+	bool "test"
+	default n
+
+config MALI_CORESIGHT
+	bool "test"
+	default n
+
+config CORESIGHT_MALI_SOURCES_ETM
+	depends on MALI_CORESIGHT && ARM64
+	bool "test"
+	default n
+
+config CORESIGHT_MALI_SOURCES_ITM
+	depends on MALI_CORESIGHT
+	bool "test"
+	default n
+
+config CORESIGHT_MALI_SOURCES_ELA
+	depends on MALI_CORESIGHT
+	bool "test"
+	default n

@@ -365,7 +365,7 @@ static int ion_mm_heap_allocate(struct ion_heap *heap,
 		return -EINVAL;
 	}
 
-	if (size / PAGE_SIZE > totalram_pages / 2) {
+	if (size / PAGE_SIZE > totalram_pages() / 2) {
 		IONMSG("%s size %lu is larger than totalram_pages.\n", __func__,
 		       size);
 		return -ENOMEM;

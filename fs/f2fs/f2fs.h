@@ -232,7 +232,7 @@ enum {
 #define DEF_MID_DISCARD_ISSUE_TIME	500	/* 500 ms, if device busy */
 #define DEF_MAX_DISCARD_ISSUE_TIME	60000	/* 60 s, if no candidates */
 #define DEF_DISCARD_URGENT_UTIL		80	/* do more discard over 80% */
-#define DEF_CP_INTERVAL			60	/* 60 secs */
+#define DEF_CP_INTERVAL			200	/* 60 secs */
 #define DEF_IDLE_INTERVAL		5	/* 5 secs */
 #define DEF_DISABLE_INTERVAL		5	/* 5 secs */
 #define DEF_DISABLE_QUICK_INTERVAL	1	/* 1 secs */
@@ -3299,8 +3299,7 @@ static inline bool f2fs_is_time_consistent(struct inode *inode)
 	if (F2FS_I(inode)->i_disk_time[1].tv_sec != inode->i_ctime.tv_sec ||
 	    F2FS_I(inode)->i_disk_time[1].tv_nsec != inode->i_ctime.tv_nsec)
 		return false;
-	if (F2FS_I(inode)->i_disk_time[2].tv_sec != inode->i_mtime.tv_sec ||
-	    F2FS_I(inode)->i_disk_time[2].tv_nsec != inode->i_mtime.tv_nsec)
+	if (!timespec64_equal(F2FS_I(inode)->i_disk_time + 2, &inode->i_mtime))
 		return false;
 	return true;
 }

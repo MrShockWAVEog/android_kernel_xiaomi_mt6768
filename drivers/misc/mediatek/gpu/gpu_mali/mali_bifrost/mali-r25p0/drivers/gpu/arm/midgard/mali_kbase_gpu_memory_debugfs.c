@@ -1,11 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
 /*
  *
- * (C) COPYRIGHT 2012-2017, 2019 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2012-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,35 +17,36 @@
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
  *
- * SPDX-License-Identifier: GPL-2.0
- *
  */
 
 #include <mali_kbase.h>
 #include <device/mali_kbase_device.h>
 
-#ifdef CONFIG_DEBUG_FS
+#if IS_ENABLED(CONFIG_DEBUG_FS)
 
 #ifdef ENABLE_MTK_MEMINFO
 #include <platform/mtk_platform_common.h>
 #endif /* ENABLE_MTK_MEMINFO */
 
-/** Show callback for the @c gpu_memory debugfs file.
+/**
+ * kbasep_gpu_memory_seq_show - Show callback for the @c gpu_memory debugfs file
+ * @sfile: The debugfs entry
+ * @data: Data associated with the entry
  *
  * This function is called to get the contents of the @c gpu_memory debugfs
  * file. This is a report of current gpu memory usage.
  *
- * @param sfile The debugfs entry
- * @param data Data associated with the entry
- *
- * @return 0 if successfully prints data in debugfs entry file
- *         -1 if it encountered an error
+ * Return:
+ * * 0 if successfully prints data in debugfs entry file
+ * * -1 if it encountered an error
  */
 
 static int kbasep_gpu_memory_seq_show(struct seq_file *sfile, void *data)
 {
 	struct list_head *entry;
 	const struct list_head *kbdev_list;
+
+	CSTD_UNUSED(data);
 
 #ifdef ENABLE_MTK_MEMINFO
 	ssize_t mtk_kbase_gpu_meminfo_index;
@@ -59,9 +61,8 @@ static int kbasep_gpu_memory_seq_show(struct seq_file *sfile, void *data)
 
 		kbdev = list_entry(entry, struct kbase_device, entry);
 		/* output the total memory usage and cap for this device */
-		seq_printf(sfile, "%-16s  %10u\n",
-				kbdev->devname,
-				atomic_read(&(kbdev->memdev.used_pages)));
+		seq_printf(sfile, "%-16s  %10u\n", kbdev->devname,
+			   atomic_read(&(kbdev->memdev.used_pages)));
 
 #ifdef ENABLE_MTK_MEMINFO
 		g_mtk_gpu_total_memory_usage_in_pages_debugfs = atomic_read(&(kbdev->memdev.used_pages));
@@ -74,12 +75,10 @@ static int kbasep_gpu_memory_seq_show(struct seq_file *sfile, void *data)
 
 		list_for_each_entry(kctx, &kbdev->kctx_list, kctx_list_link) {
 			/* output the memory usage and cap for each kctx
-			* opened on this device */
-			seq_printf(sfile, "  %s-0x%p %10u %10u\n",
-				"kctx",
-				kctx,
-				atomic_read(&(kctx->used_pages)),
-				kctx->tgid);
+			 * opened on this device
+			 */
+			seq_printf(sfile, "  %s-0x%pK %10u\n", "kctx", kctx,
+				   atomic_read(&(kctx->used_pages)));
 
 #ifdef ENABLE_MTK_MEMINFO
 			mtk_kbase_set_gpu_meminfo(mtk_kbase_gpu_meminfo_index, kctx->tgid,
@@ -98,6 +97,8 @@ static int kbasep_gpu_memory_seq_show(struct seq_file *sfile, void *data)
  */
 static int kbasep_gpu_memory_debugfs_open(struct inode *in, struct file *file)
 {
+	CSTD_UNUSED(in);
+
 	return single_open(file, kbasep_gpu_memory_seq_show, NULL);
 }
 
@@ -114,18 +115,14 @@ static const struct file_operations kbasep_gpu_memory_debugfs_fops = {
  */
 void kbasep_gpu_memory_debugfs_init(struct kbase_device *kbdev)
 {
-	debugfs_create_file("gpu_memory", S_IRUGO,
-			kbdev->mali_debugfs_directory, NULL,
-			&kbasep_gpu_memory_debugfs_fops);
-	return;
+	debugfs_create_file("gpu_memory", 0444, kbdev->mali_debugfs_directory, NULL,
+			    &kbasep_gpu_memory_debugfs_fops);
 }
-
 #else
 /*
  * Stub functions for when debugfs is disabled
  */
 void kbasep_gpu_memory_debugfs_init(struct kbase_device *kbdev)
 {
-	return;
 }
 #endif

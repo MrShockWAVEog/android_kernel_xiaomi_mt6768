@@ -178,41 +178,19 @@ do { \
 
 /* CMDQ FTRACE */
 #define cmdq_trace_begin(fmt, args...) do { \
-	preempt_disable(); \
-	event_trace_printk(cmdq_get_tracing_mark(), \
-		"B|%d|"fmt"\n", current->tgid, ##args); \
-	preempt_enable();\
 } while (0)
 
 #define cmdq_trace_end() do { \
-	preempt_disable(); \
-	event_trace_printk(cmdq_get_tracing_mark(), "E\n"); \
-	preempt_enable(); \
 } while (0)
 
 extern int cmdq_trace;
 #define cmdq_trace_ex_begin(fmt, args...) do { \
-	if (cmdq_trace) { \
-		preempt_disable(); \
-		event_trace_printk(cmdq_get_tracing_mark(), \
-			"B|%d|"fmt"\n", current->tgid, ##args); \
-		preempt_enable();\
-	} \
 } while (0)
 
 #define cmdq_trace_ex_end() do { \
-	if (cmdq_trace) { \
-		preempt_disable(); \
-		event_trace_printk(cmdq_get_tracing_mark(), "E\n"); \
-		preempt_enable(); \
-	} \
 } while (0)
 
 #define cmdq_trace_c(fmt, args...) do { \
-	preempt_disable(); \
-	event_trace_printk(cmdq_get_tracing_mark(), \
-		"C|"fmt, ##args); \
-	preempt_enable(); \
 } while (0)
 
 dma_addr_t cmdq_thread_get_pc(struct cmdq_thread *thread);

@@ -16,6 +16,7 @@
 #define __SWTP_H__
 
 #define SWTP_COMPATIBLE_DEVICE_ID "mediatek, swtp-eint"
+#define SWTP1_COMPATIBLE_DEVICE_ID "mediatek, swtp1-eint"
 
 #define SWTP_EINT_PIN_PLUG_IN        (1)
 #define SWTP_EINT_PIN_PLUG_OUT       (0)

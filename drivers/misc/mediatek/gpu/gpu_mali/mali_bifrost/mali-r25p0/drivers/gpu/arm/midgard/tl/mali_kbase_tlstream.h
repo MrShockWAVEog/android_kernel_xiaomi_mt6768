@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *
- * (C) COPYRIGHT 2015-2020 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2015-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
- *
- * SPDX-License-Identifier: GPL-2.0
  *
  */
 
@@ -28,22 +27,20 @@
 #include <linux/wait.h>
 
 /* The maximum size of a single packet used by timeline. */
-#define PACKET_SIZE        4096 /* bytes */
+#define PACKET_SIZE 4096 /* bytes */
 
 /* The number of packets used by one timeline stream. */
-#if defined(CONFIG_MALI_JOB_DUMP) || defined(CONFIG_MALI_VECTOR_DUMP)
-	#define PACKET_COUNT       64
-#else
-	#define PACKET_COUNT       32
-#endif
+#define PACKET_COUNT 128
 
 /* The maximum expected length of string in tracepoint descriptor. */
-#define STRLEN_MAX         64 /* bytes */
+#define STRLEN_MAX 64 /* bytes */
 
 /**
  * struct kbase_tlstream - timeline stream structure
  * @lock:              Message order lock
  * @buffer:            Array of buffers
+ * @buffer.size:       Number of bytes in buffer
+ * @buffer.data:       Buffer's data
  * @wbi:               Write buffer index
  * @rbi:               Read buffer index
  * @numbered:          If non-zero stream's packets are sequentially numbered
@@ -76,14 +73,14 @@ struct kbase_tlstream {
 	spinlock_t lock;
 
 	struct {
-		atomic_t size;              /* number of bytes in buffer */
-		char     data[PACKET_SIZE]; /* buffer's data */
+		atomic_t size;
+		char data[PACKET_SIZE];
 	} buffer[PACKET_COUNT];
 
 	atomic_t wbi;
 	atomic_t rbi;
 
-	int      numbered;
+	int numbered;
 	atomic_t autoflush_counter;
 	wait_queue_head_t *ready_read;
 #if MALI_UNIT_TEST
@@ -97,6 +94,9 @@ enum tl_stream_type {
 	TL_STREAM_TYPE_OBJ_SUMMARY = TL_STREAM_TYPE_FIRST,
 	TL_STREAM_TYPE_OBJ,
 	TL_STREAM_TYPE_AUX,
+#if MALI_USE_CSF
+	TL_STREAM_TYPE_CSFFW,
+#endif
 	TL_STREAM_TYPE_COUNT
 };
 
@@ -107,9 +107,8 @@ enum tl_stream_type {
  * @ready_read:  Pointer to a wait queue to signal when
  *               timeline messages are ready for collection.
  */
-void kbase_tlstream_init(struct kbase_tlstream *stream,
-	enum tl_stream_type stream_type,
-	wait_queue_head_t  *ready_read);
+void kbase_tlstream_init(struct kbase_tlstream *stream, enum tl_stream_type stream_type,
+			 wait_queue_head_t *ready_read);
 
 /**
  * kbase_tlstream_term - terminate timeline stream
@@ -140,8 +139,8 @@ void kbase_tlstream_reset(struct kbase_tlstream *stream);
  *          Only atomic operations are allowed while the stream is locked
  *          (i.e. do not use any operation that may sleep).
  */
-char *kbase_tlstream_msgbuf_acquire(struct kbase_tlstream *stream,
-	size_t msg_size, unsigned long *flags) __acquires(&stream->lock);
+char *kbase_tlstream_msgbuf_acquire(struct kbase_tlstream *stream, size_t msg_size,
+				    unsigned long *flags) __acquires(&stream->lock);
 
 /**
  * kbase_tlstream_msgbuf_release - unlock selected stream
@@ -151,16 +150,18 @@ char *kbase_tlstream_msgbuf_acquire(struct kbase_tlstream *stream,
  * Release the stream that has been previously
  * locked with a call to kbase_tlstream_msgbuf_acquire().
  */
-void kbase_tlstream_msgbuf_release(struct kbase_tlstream *stream,
-	unsigned long flags) __releases(&stream->lock);
+void kbase_tlstream_msgbuf_release(struct kbase_tlstream *stream, unsigned long flags)
+	__releases(&stream->lock);
 
 /**
  * kbase_tlstream_flush_stream - flush stream
  * @stream:     Pointer to the stream structure
  *
  * Flush pending data in the timeline stream.
+ *
+ * Return: Number of bytes available flushed and available to be read
+ *
  */
-void kbase_tlstream_flush_stream(struct kbase_tlstream *stream);
+size_t kbase_tlstream_flush_stream(struct kbase_tlstream *stream);
 
 #endif /* _KBASE_TLSTREAM_H */
-

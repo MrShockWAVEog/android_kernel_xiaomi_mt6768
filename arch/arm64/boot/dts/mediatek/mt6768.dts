@@ -315,7 +315,7 @@ page_owner=on loop.max_part=16";
 			compatible = "mediatek,reserve-memory-sspm_share";
 			no-map;
 			status = "okay";
-#if defined(CONFIG_MTK_GMO_RAM_OPTIMIZE) || defined(CONFIG_MTK_MET_MEM_ALLOC)
+#if defined(CONFIG_MTK_GMO_RAM_OPTIMIZE) || defined(CONFIG_MTK_MET_MEM_ALLOC) || !defined(CONFIG_MTK_ENG_BUILD)
 			size = <0 0x110000>; /* 1M + 64K */
 #else
 			size = <0 0x510000>; /* 5M + 64K */
@@ -666,11 +666,13 @@ page_owner=on loop.max_part=16";
 		interrupts = <GIC_SPI 73 IRQ_TYPE_EDGE_FALLING>;
 	};
 
+#ifdef CONFIF_MTK_AEE_MRDUMP
 	mrdump_ext_rst: mrdump_ext_rst {
 		compatible = "mediatek, mrdump_ext_rst-eint";
 		mode = "IRQ";
 		status = "okay";
 	};
+#endif
 
 	topmisc@10011000 {
 		compatible = "mediatek,topmisc";

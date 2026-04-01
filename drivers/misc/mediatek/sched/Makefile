@@ -29,4 +29,4 @@ obj-y += sched_ctl.o
 # sysfs interface for user to get EAS related info
 obj-y += eas_plus.o
 
-ccflags-y += -DMET_USER_EVENT_SUPPORT
+ccflags-$(CONFIG_MTK_MET) += -DMET_USER_EVENT_SUPPORT

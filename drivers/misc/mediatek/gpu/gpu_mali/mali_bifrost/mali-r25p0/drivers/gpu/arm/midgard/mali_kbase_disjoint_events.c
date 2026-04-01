@@ -1,11 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
 /*
  *
- * (C) COPYRIGHT 2014, 2020 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2014-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
- *
- * SPDX-License-Identifier: GPL-2.0
  *
  */
 
@@ -30,8 +29,7 @@ void kbase_disjoint_init(struct kbase_device *kbdev)
 {
 	KBASE_DEBUG_ASSERT(kbdev != NULL);
 
-	atomic_set(&kbdev->disjoint_event.count, 0);
-	atomic_set(&kbdev->disjoint_event.state, 0);
+	/* disjoiont_event is already zero-initialized by kzalloc. */
 }
 
 /* increment the disjoint event count */
@@ -76,6 +74,6 @@ u32 kbase_disjoint_event_get(struct kbase_device *kbdev)
 {
 	KBASE_DEBUG_ASSERT(kbdev != NULL);
 
-	return atomic_read(&kbdev->disjoint_event.count);
+	return (u32)atomic_read(&kbdev->disjoint_event.count);
 }
 KBASE_EXPORT_TEST_API(kbase_disjoint_event_get);

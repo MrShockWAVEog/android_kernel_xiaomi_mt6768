@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *
- * (C) COPYRIGHT 2014-2019 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2014-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
- *
- * SPDX-License-Identifier: GPL-2.0
  *
  */
 
@@ -36,8 +35,7 @@
  * - lp_mem_pool_size: get/set the current sizes of @kctx: lp_mem_pool
  * - lp_mem_pool_max_size: get/set the max sizes of @kctx:lp_mem_pool
  */
-void kbase_mem_pool_debugfs_init(struct dentry *parent,
-		struct kbase_context *kctx);
+void kbase_mem_pool_debugfs_init(struct dentry *parent, struct kbase_context *kctx);
 
 /**
  * kbase_mem_pool_debugfs_trim - Grow or shrink a memory pool to a new size
@@ -65,8 +63,7 @@ void kbase_mem_pool_debugfs_trim(void *array, size_t index, size_t value);
  * If the maximum size is reduced, the pool will be shrunk to adhere to the
  * new limit. For details see kbase_mem_pool_shrink().
  */
-void kbase_mem_pool_debugfs_set_max_size(void *array, size_t index,
-	size_t value);
+void kbase_mem_pool_debugfs_set_max_size(void *array, size_t index, size_t value);
 
 /**
  * kbase_mem_pool_debugfs_size - Get number of free pages in a memory pool
@@ -103,8 +100,7 @@ size_t kbase_mem_pool_debugfs_max_size(void *array, size_t index);
  * @value : Maximum number of free pages that a memory pool created from the
  *          selected configuration can hold.
  */
-void kbase_mem_pool_config_debugfs_set_max_size(void *array, size_t index,
-	size_t value);
+void kbase_mem_pool_config_debugfs_set_max_size(void *array, size_t index, size_t value);
 
 /**
  * kbase_mem_pool_config_debugfs_max_size - Get maximum number of free pages
@@ -119,5 +115,4 @@ void kbase_mem_pool_config_debugfs_set_max_size(void *array, size_t index,
  */
 size_t kbase_mem_pool_config_debugfs_max_size(void *array, size_t index);
 
-#endif  /*_KBASE_MEM_POOL_DEBUGFS_H_ */
-
+#endif /*_KBASE_MEM_POOL_DEBUGFS_H_ */

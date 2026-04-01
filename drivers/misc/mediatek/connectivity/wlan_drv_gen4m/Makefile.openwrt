@@ -273,7 +273,12 @@ else
     ccflags-y += -DCFG_ENABLE_GTK_FRAME_FILTER=0
 endif
 
+ifeq ($(CONFIG_MTK_MET), y)
 MTK_MET_PROFILING_SUPPORT = yes
+else
+MTK_MET_PROFILING_SUPPORT = no
+endif
+
 ifeq ($(MTK_MET_PROFILING_SUPPORT), yes)
     ccflags-y += -DCFG_MET_PACKET_TRACE_SUPPORT=1
 else

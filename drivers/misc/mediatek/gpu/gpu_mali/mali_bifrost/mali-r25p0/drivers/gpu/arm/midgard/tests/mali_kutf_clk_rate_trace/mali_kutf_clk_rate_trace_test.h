@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *
- * (C) COPYRIGHT 2020 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2020-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
- *
- * SPDX-License-Identifier: GPL-2.0
  *
  */
 
@@ -31,6 +30,8 @@
  * enum kbasep_clk_rate_trace_req - request command to the clock rate trace
  *                                  service portal.
  *
+ * @PORTAL_CMD_GET_PLATFORM:       Request the platform that the tests are
+ *                                 to be run on.
  * @PORTAL_CMD_GET_CLK_RATE_MGR:   Request the clock trace manager internal
  *                                 data record. On a positive acknowledgement
  *                                 the prevailing clock rates and the GPU idle
@@ -64,6 +65,9 @@
  *                                 interactive session, an inherent basic test
  *                                 carrying out some sanity check on the clock
  *                                 trace is undertaken.
+ * @PORTAL_CMD_INVOKE_NOTIFY_42KHZ: Invokes all clock rate trace manager callbacks
+ *                                 for the top clock domain with a new GPU frequency
+ *                                 set to 42 kHZ.
  * @PORTAL_CMD_INVALID:            Valid commands termination marker. Must be
  *                                 the highest enumeration value, as it
  *                                 represents valid command array size.
@@ -71,19 +75,23 @@
  */
 /* PORTAL_CMD_INVALID must be the last one, serving the size */
 enum kbasep_clk_rate_trace_req {
+	PORTAL_CMD_GET_PLATFORM,
 	PORTAL_CMD_GET_CLK_RATE_MGR,
 	PORTAL_CMD_GET_CLK_RATE_TRACE,
 	PORTAL_CMD_GET_TRACE_SNAPSHOT,
 	PORTAL_CMD_INC_PM_CTX_CNT,
 	PORTAL_CMD_DEC_PM_CTX_CNT,
 	PORTAL_CMD_CLOSE_PORTAL,
+	PORTAL_CMD_INVOKE_NOTIFY_42KHZ,
 	PORTAL_CMD_INVALID,
 	PORTAL_TOTAL_CMDS = PORTAL_CMD_INVALID,
 };
 
 /**
- * Portal service request command names. The portal request consists of a kutf
- * named u64-value. For those above enumerated PORTAL_CMD, the names defined
+ * DOC: Portal service request command names.
+ *
+ * The portal request consists of a kutf named u64-value.
+ * For those above enumerated PORTAL_CMD, the names defined
  * here are used to mark the name and then followed with a sequence number
  * value. Example (manual script here for illustration):
  *   exec 5<>run                   # open the portal kutf run as fd-5
@@ -118,17 +126,20 @@ enum kbasep_clk_rate_trace_req {
  *    Note, at the close, PM_CTX_CNT is 1. The PM_CTX_CNT will internally be
  *    dropped down to 0 as part of the portal close clean up.
  */
-#define GET_CLK_RATE_MGR     "GET_CLK_RATE_MGR"
-#define GET_CLK_RATE_TRACE   "GET_CLK_RATE_TRACE"
-#define GET_TRACE_SNAPSHOT   "GET_TRACE_SNAPSHOT"
-#define INC_PM_CTX_CNT       "INC_PM_CTX_CNT"
-#define DEC_PM_CTX_CNT       "DEC_PM_CTX_CNT"
-#define CLOSE_PORTAL         "CLOSE_PORTAL"
+#define GET_PLATFORM "GET_PLATFORM"
+#define GET_CLK_RATE_MGR "GET_CLK_RATE_MGR"
+#define GET_CLK_RATE_TRACE "GET_CLK_RATE_TRACE"
+#define GET_TRACE_SNAPSHOT "GET_TRACE_SNAPSHOT"
+#define INC_PM_CTX_CNT "INC_PM_CTX_CNT"
+#define DEC_PM_CTX_CNT "DEC_PM_CTX_CNT"
+#define CLOSE_PORTAL "CLOSE_PORTAL"
+#define INVOKE_NOTIFY_42KHZ "INVOKE_NOTIFY_42KHZ"
 
 /**
- * Portal service response tag names. The response consists of a kutf
- * named string-value. In case of a 'NACK' (negative acknowledgement), it
- * can be one of the two formats:
+ * DOC: Portal service response tag names.
+ *
+ * The response consists of a kutf named string-value.
+ * In case of a 'NACK' (negative acknowledgment), it can be one of the two formats:
  *   1. NACK="{SEQ:2, MSG:xyzed}"     # NACK on command with sequence tag-2.
  *      Note, the portal has received a valid name and valid sequence number
  *            but can't carry-out the request, reason in the MSG field.

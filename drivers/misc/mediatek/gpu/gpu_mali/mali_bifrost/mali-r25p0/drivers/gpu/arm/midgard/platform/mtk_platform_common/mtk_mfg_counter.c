@@ -19,7 +19,6 @@
 #include <string.h>
 #include <linux/math64.h>
 
-
 #define MALI_HWC_TYPES					4
 #define MALI_COUNTERS_PER_BLOCK			64
 /*

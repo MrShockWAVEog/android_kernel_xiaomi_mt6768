@@ -11,7 +11,7 @@
 # GNU General Public License for more details.
 #
 
-ccflags-y += -DMET_USER_EVENT_SUPPORT
+ccflags-$(CONFIG_MTK_MET) += -DMET_USER_EVENT_SUPPORT
 
 ccflags-y += \
 	-I$(CPUFREQ_ROOT_DIR)/inc \

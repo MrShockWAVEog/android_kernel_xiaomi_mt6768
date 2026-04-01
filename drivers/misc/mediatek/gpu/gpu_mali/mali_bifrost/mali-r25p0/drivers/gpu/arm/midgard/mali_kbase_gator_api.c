@@ -25,9 +25,9 @@
 #include "mali_kbase_mem_linux.h"
 #include "mali_kbase_gator_api.h"
 #include "mali_kbase_gator_hwcnt_names.h"
-#include "mali_kbase_hwcnt_types.h"
-#include "mali_kbase_hwcnt_gpu.h"
-#include "mali_kbase_hwcnt_virtualizer.h"
+#include "hwcnt/mali_kbase_hwcnt_types.h"
+#include "hwcnt/mali_kbase_hwcnt_gpu.h"
+#include "hwcnt/mali_kbase_hwcnt_virtualizer.h"
 
 #define MALI_MAX_CORES_PER_GROUP		4
 #define MALI_MAX_NUM_BLOCKS_PER_GROUP	8
@@ -61,53 +61,11 @@ const char * const *kbase_gator_hwcnt_init_names(uint32_t *total_counters)
 	if (!kbdev)
 		return NULL;
 
-	gpu_id = kbdev->gpu_props.props.raw_props.gpu_id;
+	gpu_id = TGOX_product_model;
 
-	
-	switch (gpu_id & GPU_ID2_PRODUCT_MODEL) {
-	case GPU_ID2_PRODUCT_TMIX:
-		hardware_counters = hardware_counters_mali_tMIx;
-		count = ARRAY_SIZE(hardware_counters_mali_tMIx);
-		break;
-	case GPU_ID2_PRODUCT_THEX:
-		hardware_counters = hardware_counters_mali_tHEx;
-		count = ARRAY_SIZE(hardware_counters_mali_tHEx);
-		break;
-	case GPU_ID2_PRODUCT_TSIX:
-		hardware_counters = hardware_counters_mali_tSIx;
-		count = ARRAY_SIZE(hardware_counters_mali_tSIx);
-		break;
-	case GPU_ID2_PRODUCT_TDVX:
-		hardware_counters = hardware_counters_mali_tSIx;
-		count = ARRAY_SIZE(hardware_counters_mali_tSIx);
-		break;
-	case GPU_ID2_PRODUCT_TNOX:
-		hardware_counters = hardware_counters_mali_tNOx;
-		count = ARRAY_SIZE(hardware_counters_mali_tNOx);
-		break;
-	case GPU_ID2_PRODUCT_TGOX:
-		hardware_counters = hardware_counters_mali_tGOx;
-		count = ARRAY_SIZE(hardware_counters_mali_tGOx);
-		break;
-	case GPU_ID2_PRODUCT_TTRX:
-		hardware_counters = hardware_counters_mali_tTRx;
-		count = ARRAY_SIZE(hardware_counters_mali_tTRx);
-		break;
-	case GPU_ID2_PRODUCT_TNAX:
-		hardware_counters = hardware_counters_mali_tNAx;
-		count = ARRAY_SIZE(hardware_counters_mali_tNAx);
-		break;
-	case GPU_ID2_PRODUCT_TBEX:
-		hardware_counters = hardware_counters_mali_tBEx;
-		count = ARRAY_SIZE(hardware_counters_mali_tBEx);
-		break;
-	default:
-		hardware_counters = NULL;
-		count = 0;
-		dev_err(kbdev->dev, "Unrecognized product ID: %u\n",
-			gpu_id);
-		break;
-	}
+	// Mali-G52
+	hardware_counters = hardware_counters_mali_tGOx;
+	count = ARRAY_SIZE(hardware_counters_mali_tGOx);
 
 	/* Release the kbdev reference. */
 	kbase_release_device(kbdev);
@@ -167,61 +125,17 @@ struct kbase_gator_hwcnt_handles *kbase_gator_hwcnt_init(struct kbase_gator_hwcn
 
 	in_out_info->kernel_dump_buffer = hand->dump_buf.dump_buf;
 
-	in_out_info->nr_cores = hand->kbdev->gpu_props.num_cores;
-	in_out_info->nr_core_groups = hand->kbdev->gpu_props.num_core_groups;
-	in_out_info->gpu_id = hand->kbdev->gpu_props.props.raw_props.gpu_id;
+	in_out_info->nr_cores = TGOX_num_cores;
+	in_out_info->nr_core_groups = TGOX_num_core_groups;
+	in_out_info->gpu_id = TGOX_product_model;
 
-	/* If we are using a v4 device (Mali-T6xx or Mali-T72x) */
-	/// @{ MTK
-	//  r25p0 remove BASE_HW_FEATURE_V4, so remove this section
-	#if 0
-	if (kbase_hw_has_feature(hand->kbdev, BASE_HW_FEATURE_V4)) {
-		uint32_t cg, j;
-		uint64_t core_mask;
-
-		/* There are 8 hardware counters blocks per core group */
-		in_out_info->hwc_layout = kmalloc(sizeof(enum hwc_type) *
-			MALI_MAX_NUM_BLOCKS_PER_GROUP *
-			in_out_info->nr_core_groups, GFP_KERNEL);
-
-		if (!in_out_info->hwc_layout)
-			goto free_dump_buf;
-
-		dump_size = in_out_info->nr_core_groups *
-			MALI_MAX_NUM_BLOCKS_PER_GROUP *
-			MALI_COUNTERS_PER_BLOCK *
-			MALI_BYTES_PER_COUNTER;
-
-		for (cg = 0; cg < in_out_info->nr_core_groups; cg++) {
-			core_mask = hand->kbdev->gpu_props.props.coherency_info.group[cg].core_mask;
-
-			for (j = 0; j < MALI_MAX_CORES_PER_GROUP; j++) {
-				if (core_mask & (1u << j))
-					in_out_info->hwc_layout[i++] = SHADER_BLOCK;
-				else
-					in_out_info->hwc_layout[i++] = RESERVED_BLOCK;
-			}
-
-			in_out_info->hwc_layout[i++] = TILER_BLOCK;
-			in_out_info->hwc_layout[i++] = MMU_L2_BLOCK;
-
-			in_out_info->hwc_layout[i++] = RESERVED_BLOCK;
-
-			if (0 == cg)
-				in_out_info->hwc_layout[i++] = JM_BLOCK;
-			else
-				in_out_info->hwc_layout[i++] = RESERVED_BLOCK;
-		}
-	/* If we are using any other device */
-	} else 
-	#endif
-	{
+	if (true) {
 		uint32_t nr_l2, nr_sc_bits, j;
 		uint64_t core_mask;
 
-		nr_l2 = hand->kbdev->gpu_props.props.l2_props.num_l2_slices;
+		nr_l2 = hand->kbdev->gpu_props.num_l2_slices;
 
-		core_mask = hand->kbdev->gpu_props.props.coherency_info.group[0].core_mask;
+		core_mask = hand->kbdev->gpu_props.coherency_info.group.core_mask;
 
 		nr_sc_bits = fls64(core_mask);
 

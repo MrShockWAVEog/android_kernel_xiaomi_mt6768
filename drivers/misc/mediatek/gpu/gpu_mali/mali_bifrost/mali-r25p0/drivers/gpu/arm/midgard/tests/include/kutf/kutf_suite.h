@@ -1,11 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *
- * (C) COPYRIGHT 2014, 2017 ARM Limited. All rights reserved.
+ * (C) COPYRIGHT 2014-2023 ARM Limited. All rights reserved.
  *
  * This program is free software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
- * of such GNU licence.
+ * of such GNU license.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, you can access it online at
  * http://www.gnu.org/licenses/gpl-2.0.html.
- *
- * SPDX-License-Identifier: GPL-2.0
  *
  */
 
@@ -44,36 +43,36 @@
 #define KUTF_MAX_LINE_LENGTH (1024u)
 
 /**
- * Pseudo-flag indicating an absence of any specified test class. Note that
- * tests should not be annotated with this constant as it is simply a zero
+ * KUTF_F_TEST_NONE - Pseudo-flag indicating an absence of any specified test class.
+ * Note that tests should not be annotated with this constant as it is simply a zero
  * value; tests without a more specific class must be marked with the flag
  * KUTF_F_TEST_GENERIC.
  */
-#define KUTF_F_TEST_NONE                ((unsigned int)(0))
+#define KUTF_F_TEST_NONE ((unsigned int)(0))
 
 /**
- * Class indicating this test is a smoke test.
+ * KUTF_F_TEST_SMOKETEST - Class indicating this test is a smoke test.
  * A given set of smoke tests should be quick to run, enabling rapid turn-around
  * of "regress-on-commit" test runs.
  */
-#define KUTF_F_TEST_SMOKETEST           ((unsigned int)(1 << 1))
+#define KUTF_F_TEST_SMOKETEST ((unsigned int)(1 << 1))
 
 /**
- * Class indicating this test is a performance test.
+ * KUTF_F_TEST_PERFORMANCE - Class indicating this test is a performance test.
  * These tests typically produce a performance metric, such as "time to run" or
  * "frames per second",
  */
-#define KUTF_F_TEST_PERFORMANCE         ((unsigned int)(1 << 2))
+#define KUTF_F_TEST_PERFORMANCE ((unsigned int)(1 << 2))
 
 /**
- * Class indicating that this test is a deprecated test.
+ * KUTF_F_TEST_DEPRECATED - Class indicating that this test is a deprecated test.
  * These tests have typically been replaced by an alternative test which is
  * more efficient, or has better coverage.
  */
-#define KUTF_F_TEST_DEPRECATED          ((unsigned int)(1 << 3))
+#define KUTF_F_TEST_DEPRECATED ((unsigned int)(1 << 3))
 
 /**
- * Class indicating that this test is a known failure.
+ * KUTF_F_TEST_EXPECTED_FAILURE - Class indicating that this test is a known failure.
  * These tests have typically been run and failed, but marking them as a known
  * failure means it is easier to triage results.
  *
@@ -81,73 +80,74 @@
  * results database and web UI, as this means there is no need to modify the
  * test code.
  */
-#define KUTF_F_TEST_EXPECTED_FAILURE    ((unsigned int)(1 << 4))
+#define KUTF_F_TEST_EXPECTED_FAILURE ((unsigned int)(1 << 4))
 
 /**
- * Class indicating that this test is a generic test, which is not a member of
- * a more specific test class. Tests which are not created with a specific set
+ * KUTF_F_TEST_GENERIC - Class indicating that this test is a generic test,
+ * which is not a member of a more specific test class.
+ * Tests which are not created with a specific set
  * of filter flags by the user are assigned this test class by default.
  */
-#define KUTF_F_TEST_GENERIC             ((unsigned int)(1 << 5))
+#define KUTF_F_TEST_GENERIC ((unsigned int)(1 << 5))
 
 /**
- * Class indicating this test is a resource allocation failure test.
+ * KUTF_F_TEST_RESFAIL - Class indicating this test is a resource allocation failure test.
  * A resource allocation failure test will test that an error code is
  * correctly propagated when an allocation fails.
  */
-#define KUTF_F_TEST_RESFAIL             ((unsigned int)(1 << 6))
+#define KUTF_F_TEST_RESFAIL ((unsigned int)(1 << 6))
 
 /**
- * Additional flag indicating that this test is an expected failure when
- * run in resource failure mode. These tests are never run when running
- * the low resource mode.
+ * KUTF_F_TEST_EXPECTED_FAILURE_RF - Additional flag indicating that this test
+ * is an expected failure when run in resource failure mode.
+ * These tests are never run when running the low resource mode.
  */
 #define KUTF_F_TEST_EXPECTED_FAILURE_RF ((unsigned int)(1 << 7))
 
 /**
- * Flag reserved for user-defined filter zero.
+ * KUTF_F_TEST_USER_0 - Flag reserved for user-defined filter zero.
  */
 #define KUTF_F_TEST_USER_0 ((unsigned int)(1 << 24))
 
 /**
- * Flag reserved for user-defined filter one.
+ * KUTF_F_TEST_USER_1 - Flag reserved for user-defined filter one.
  */
 #define KUTF_F_TEST_USER_1 ((unsigned int)(1 << 25))
 
 /**
- * Flag reserved for user-defined filter two.
+ * KUTF_F_TEST_USER_2 - Flag reserved for user-defined filter two.
  */
 #define KUTF_F_TEST_USER_2 ((unsigned int)(1 << 26))
 
 /**
- * Flag reserved for user-defined filter three.
+ * KUTF_F_TEST_USER_3 - Flag reserved for user-defined filter three.
  */
 #define KUTF_F_TEST_USER_3 ((unsigned int)(1 << 27))
 
 /**
- * Flag reserved for user-defined filter four.
+ * KUTF_F_TEST_USER_4 - Flag reserved for user-defined filter four.
  */
 #define KUTF_F_TEST_USER_4 ((unsigned int)(1 << 28))
 
 /**
- * Flag reserved for user-defined filter five.
+ * KUTF_F_TEST_USER_5 - Flag reserved for user-defined filter five.
  */
 #define KUTF_F_TEST_USER_5 ((unsigned int)(1 << 29))
 
 /**
- * Flag reserved for user-defined filter six.
+ * KUTF_F_TEST_USER_6 - Flag reserved for user-defined filter six.
  */
 #define KUTF_F_TEST_USER_6 ((unsigned int)(1 << 30))
 
 /**
- * Flag reserved for user-defined filter seven.
+ * KUTF_F_TEST_USER_7 - Flag reserved for user-defined filter seven.
  */
 #define KUTF_F_TEST_USER_7 ((unsigned int)(1 << 31))
 
 /**
- * Pseudo-flag indicating that all test classes should be executed.
+ * KUTF_F_TEST_ALL - Pseudo-flag indicating that all test classes should be executed.
  */
-#define KUTF_F_TEST_ALL                 ((unsigned int)(0xFFFFFFFFU))
+#define KUTF_F_TEST_ALL ((unsigned int)(0xFFFFFFFFU))
 
 /**
  * union kutf_callback_data - Union used to store test callback data
@@ -157,7 +157,7 @@
  */
 union kutf_callback_data {
 	void *ptr_value;
-	u32  u32_value;
+	u32 u32_value;
 };
 
 /**
@@ -183,7 +183,7 @@ struct kutf_userdata_line {
  * the warning followed by 'cat' exiting due to EOF - which is much more user
  * friendly than blocking indefinitely waiting for user data.
  */
-#define KUTF_USERDATA_WARNING_OUTPUT  1
+#define KUTF_USERDATA_WARNING_OUTPUT 1
 
 /**
  * struct kutf_userdata - Structure holding user data
@@ -201,38 +201,40 @@ struct kutf_userdata {
 
 /**
  * struct kutf_context - Structure representing a kernel test context
- * @kref:		Refcount for number of users of this context
- * @suite:		Convenience pointer to the suite this context
- *                      is running
- * @test_fix:		The fixture that is being run in this context
- * @fixture_pool:	The memory pool used for the duration of
- *                      the fixture/text context.
- * @fixture:		The user provided fixture structure.
- * @fixture_index:	The index (id) of the current fixture.
- * @fixture_name:	The name of the current fixture (or NULL if unnamed).
- * @test_data:		Any user private data associated with this test
- * @result_set:		All the results logged by this test context
- * @status:		The status of the currently running fixture.
- * @expected_status:	The expected status on exist of the currently
- *                      running fixture.
- * @work:		Work item to enqueue onto the work queue to run the test
- * @userdata:		Structure containing the user data for the test to read
+ * @kref:            Refcount for number of users of this context
+ * @suite:           Convenience pointer to the suite this context
+ *                   is running
+ * @test_fix:        The fixture that is being run in this context
+ * @fixture_pool:    The memory pool used for the duration of
+ *                   the fixture/text context.
+ * @fixture:         The user provided fixture structure.
+ * @fixture_index:   The index (id) of the current fixture.
+ * @fixture_name:    The name of the current fixture (or NULL if unnamed).
+ * @test_data:       Any user private data associated with this test
+ * @result_set:      All the results logged by this test context
+ * @output_sync:     Mutex to serialize test failure output.
+ * @status:	         The status of the currently running fixture.
+ * @expected_status: The expected status on exist of the currently
+ *                   running fixture.
+ * @work:            Work item to enqueue onto the work queue to run the test
+ * @userdata:        Structure containing the user data for the test to read
  */
 struct kutf_context {
-	struct kref                     kref;
-	struct kutf_suite               *suite;
-	struct kutf_test_fixture        *test_fix;
-	struct kutf_mempool             fixture_pool;
-	void                            *fixture;
-	unsigned int                    fixture_index;
-	const char                      *fixture_name;
-	union kutf_callback_data        test_data;
-	struct kutf_result_set          *result_set;
-	enum kutf_result_status         status;
-	enum kutf_result_status         expected_status;
+	struct kref kref;
+	struct kutf_suite *suite;
+	struct kutf_test_fixture *test_fix;
+	struct kutf_mempool fixture_pool;
+	void *fixture;
+	unsigned int fixture_index;
+	const char *fixture_name;
+	union kutf_callback_data test_data;
+	struct kutf_result_set *result_set;
+	struct mutex output_sync;
+	enum kutf_result_status status;
+	enum kutf_result_status expected_status;
 
-	struct work_struct              work;
-	struct kutf_userdata            userdata;
+	struct work_struct work;
+	struct kutf_userdata userdata;
 };
 
 /**
@@ -252,21 +254,22 @@ struct kutf_context {
  *                              part of this suite
  */
 struct kutf_suite {
-	struct kutf_application        *app;
-	const char                     *name;
-	union kutf_callback_data       suite_data;
+	struct kutf_application *app;
+	const char *name;
+	union kutf_callback_data suite_data;
 	void *(*create_fixture)(struct kutf_context *context);
-	void  (*remove_fixture)(struct kutf_context *context);
-	unsigned int                   fixture_variants;
-	unsigned int                   suite_default_flags;
-	struct list_head               node;
-	struct dentry                  *dir;
-	struct list_head               test_list;
+	void (*remove_fixture)(struct kutf_context *context);
+	unsigned int fixture_variants;
+	unsigned int suite_default_flags;
+	struct list_head node;
+	struct dentry *dir;
+	struct list_head test_list;
 };
 
-/* ============================================================================
-	Application functions
-============================================================================ */
+/** ===========================================================================
+ * Application functions
+ * ============================================================================
+ */
 
 /**
  * kutf_create_application() - Create an in kernel test application.
@@ -284,9 +287,10 @@ struct kutf_application *kutf_create_application(const char *name);
  */
 void kutf_destroy_application(struct kutf_application *app);
 
-/* ============================================================================
-	Suite functions
-============================================================================ */
+/**============================================================================
+ * Suite functions
+ * ============================================================================
+ */
 
 /**
  * kutf_create_suite() - Create a kernel test suite.
@@ -307,12 +311,10 @@ void kutf_destroy_application(struct kutf_application *app);
  * Return: pointer to the created kutf_suite on success or NULL
  * on failure
  */
-struct kutf_suite *kutf_create_suite(
-		struct kutf_application *app,
-		const char *name,
-		unsigned int fixture_count,
-		void *(*create_fixture)(struct kutf_context *context),
-		void (*remove_fixture)(struct kutf_context *context));
+struct kutf_suite *kutf_create_suite(struct kutf_application *app, const char *name,
+				     unsigned int fixture_count,
+				     void *(*create_fixture)(struct kutf_context *context),
+				     void (*remove_fixture)(struct kutf_context *context));
 
 /**
  * kutf_create_suite_with_filters() - Create a kernel test suite with user
@@ -335,12 +337,9 @@ struct kutf_suite *kutf_create_suite(
  * Return: pointer to the created kutf_suite on success or NULL on failure
  */
 struct kutf_suite *kutf_create_suite_with_filters(
-		struct kutf_application *app,
-		const char *name,
-		unsigned int fixture_count,
-		void *(*create_fixture)(struct kutf_context *context),
-		void (*remove_fixture)(struct kutf_context *context),
-		unsigned int filters);
+	struct kutf_application *app, const char *name, unsigned int fixture_count,
+	void *(*create_fixture)(struct kutf_context *context),
+	void (*remove_fixture)(struct kutf_context *context), unsigned int filters);
 
 /**
  * kutf_create_suite_with_filters_and_data() - Create a kernel test suite with
@@ -360,14 +359,12 @@ struct kutf_suite *kutf_create_suite_with_filters(
  * Return: pointer to the created kutf_suite on success or NULL
  * on failure
  */
-struct kutf_suite *kutf_create_suite_with_filters_and_data(
-		struct kutf_application *app,
-		const char *name,
-		unsigned int fixture_count,
-		void *(*create_fixture)(struct kutf_context *context),
-		void (*remove_fixture)(struct kutf_context *context),
-		unsigned int filters,
-		union kutf_callback_data suite_data);
+struct kutf_suite *
+kutf_create_suite_with_filters_and_data(struct kutf_application *app, const char *name,
+					unsigned int fixture_count,
+					void *(*create_fixture)(struct kutf_context *context),
+					void (*remove_fixture)(struct kutf_context *context),
+					unsigned int filters, union kutf_callback_data suite_data);
 
 /**
  * kutf_add_test() - Add a test to a kernel test suite.
@@ -378,10 +375,8 @@ struct kutf_suite *kutf_create_suite_with_filters_and_data(
  *
  * Note: As no filters are provided the test will use the suite filters instead
  */
-void kutf_add_test(struct kutf_suite *suite,
-		unsigned int id,
-		const char *name,
-		void (*execute)(struct kutf_context *context));
+void kutf_add_test(struct kutf_suite *suite, unsigned int id, const char *name,
+		   void (*execute)(struct kutf_context *context));
 
 /**
  * kutf_add_test_with_filters() - Add a test to a kernel test suite with filters
@@ -391,11 +386,9 @@ void kutf_add_test(struct kutf_suite *suite,
  * @execute:	Callback to the test function to run.
  * @filters:	A set of filtering flags, assigning test categories.
  */
-void kutf_add_test_with_filters(struct kutf_suite *suite,
-		unsigned int id,
-		const char *name,
-		void (*execute)(struct kutf_context *context),
-		unsigned int filters);
+void kutf_add_test_with_filters(struct kutf_suite *suite, unsigned int id, const char *name,
+				void (*execute)(struct kutf_context *context),
+				unsigned int filters);
 
 /**
  * kutf_add_test_with_filters_and_data() - Add a test to a kernel test suite
@@ -408,18 +401,15 @@ void kutf_add_test_with_filters(struct kutf_suite *suite,
  * @test_data:	Test specific callback data, provided during the
  *		running of the test in the kutf_context
  */
-void kutf_add_test_with_filters_and_data(
-		struct kutf_suite *suite,
-		unsigned int id,
-		const char *name,
-		void (*execute)(struct kutf_context *context),
-		unsigned int filters,
-		union kutf_callback_data test_data);
+void kutf_add_test_with_filters_and_data(struct kutf_suite *suite, unsigned int id,
+					 const char *name,
+					 void (*execute)(struct kutf_context *context),
+					 unsigned int filters, union kutf_callback_data test_data);
 
-
-/* ============================================================================
-	Test functions
-============================================================================ */
+/** ===========================================================================
+ * Test functions
+ * ============================================================================
+ */
 /**
  * kutf_test_log_result_external() - Log a result which has been created
  *                                   externally into a in a standard form
@@ -428,10 +418,8 @@ void kutf_add_test_with_filters_and_data(
  * @message:	The message for this result
  * @new_status:	The result status of this log message
  */
-void kutf_test_log_result_external(
-	struct kutf_context *context,
-	const char *message,
-	enum kutf_result_status new_status);
+void kutf_test_log_result_external(struct kutf_context *context, const char *message,
+				   enum kutf_result_status new_status);
 
 /**
  * kutf_test_expect_abort() - Tell the kernel that you expect the current
@@ -524,6 +512,21 @@ void kutf_test_debug(struct kutf_context *context, char const *message);
 void kutf_test_info(struct kutf_context *context, char const *message);
 
 /**
+ * kutf_test_info_msg() - Send a formatted information message.
+ *
+ * @context: The test context this test is running in.
+ * @msg:     A format string with the failure message.
+ * @...:     Additional parameters corresponding to the format flags of the
+ *           format string.
+ *
+ * Note: The message must not be freed during the lifetime of the test run.
+ * This means it should either be a prebaked string, or if a dynamic string
+ * is required it must be created with kutf_dsprintf which will store
+ * the resultant string in a buffer who's lifetime is the same as the test run.
+ */
+void kutf_test_info_msg(struct kutf_context *context, char const *msg, ...) __printf(2, 3);
+
+/**
  * kutf_test_warn() - Send a warning message
  * @context:	The test context this test is running in.
  * @message:	A message string containing the warning message.
@@ -548,6 +551,16 @@ void kutf_test_warn(struct kutf_context *context, char const *message);
 void kutf_test_fail(struct kutf_context *context, char const *message);
 
 /**
+ * kutf_test_fail_msg() - Send a formatted failure message.
+ *
+ * @context:	The test context this test is running in.
+ * @msg:	A format string with the failure message.
+ * @...:    Additional parameters corresponding to the format flags of the
+ *          format string.
+ */
+void kutf_test_fail_msg(struct kutf_context *context, char const *msg, ...) __printf(2, 3);
+
+/**
  * kutf_test_fatal() - Tell the kernel that a test has triggered a fatal error
  * @context:	The test context this test is running in.
  * @message:	A message string containing the fatal error message.
@@ -566,4 +579,4 @@ void kutf_test_fatal(struct kutf_context *context, char const *message);
  */
 void kutf_test_abort(struct kutf_context *context);
 
-#endif	/* _KERNEL_UTF_SUITE_H_ */
+#endif /* _KERNEL_UTF_SUITE_H_ */

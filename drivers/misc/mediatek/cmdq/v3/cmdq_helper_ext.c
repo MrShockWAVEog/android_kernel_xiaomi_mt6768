@@ -4862,7 +4862,6 @@ s32 cmdq_pkt_wait_flush_ex_result(struct cmdqRecStruct *handle)
 
 
 	CMDQ_SYSTRACE_BEGIN("%s_wait_done\n", __func__);
-	handle->beginWait = sched_clock();
 
 	client = cmdq_clients[(u32)handle->thread];
 	if (!client->chan->mbox || !client->chan->mbox->dev)
@@ -4918,7 +4917,6 @@ s32 cmdq_pkt_wait_flush_ex_result(struct cmdqRecStruct *handle)
 		count++;
 	} while (1);
 
-	handle->wakedUp = sched_clock();
 	CMDQ_SYSTRACE_END();
 
 	if (handle->profile_exec) {

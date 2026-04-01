@@ -54,12 +54,16 @@ GED_LOG_BUF_HANDLE ged_log_buf_get(const char *pszName);
 int ged_log_buf_get_early(const char *pszName,
 	GED_LOG_BUF_HANDLE *callback_set_handle);
 
+#if 0
 GED_ERROR ged_log_buf_print(GED_LOG_BUF_HANDLE hLogBuf,
 	const char *fmt, ...) GED_LOG_BUF_FORMAT_PRINTF(2, 3);
 
 GED_ERROR
 ged_log_buf_print2(GED_LOG_BUF_HANDLE hLogBuf, int i32LogAttrs,
 	const char *fmt, ...) GED_LOG_BUF_FORMAT_PRINTF(3, 4);
+#endif
+#define ged_log_buf_print(hLogBuf, fmt, ...) (0)
+#define ged_log_buf_print2(hLogBuf, fmt, ...) (0)
 
 GED_ERROR ged_log_system_init(void);
 
@@ -79,10 +83,12 @@ void ged_log_perf_trace_counter(char *name, long long count, int pid,
 
 void ged_log_dump(GED_LOG_BUF_HANDLE hLogBuf);
 
+#if 0
 #if defined(CONFIG_MACH_MT8167) || defined(CONFIG_MACH_MT8173) ||\
 defined(CONFIG_MACH_MT6739) || defined(CONFIG_MACH_MT6761)\
 || defined(CONFIG_MACH_MT6765)
 extern void ged_dump_fw(void);
+#endif
 #endif
 
 #endif
