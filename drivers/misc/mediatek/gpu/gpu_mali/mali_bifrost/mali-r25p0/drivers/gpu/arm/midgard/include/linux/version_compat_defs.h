@@ -41,8 +41,10 @@
 #endif
 
 #if KERNEL_VERSION(4, 16, 0) > LINUX_VERSION_CODE
-typedef unsigned int __poll_t;
-
+/*
+ * This kernel tree already provides __poll_t via the main kernel headers.
+ * Keep only the missing HRTIMER fallback here to avoid typedef redefinition.
+ */
 #ifndef HRTIMER_MODE_REL_SOFT
 #define HRTIMER_MODE_REL_SOFT HRTIMER_MODE_REL
 #endif
@@ -359,7 +361,9 @@ static inline long kbase_pin_user_pages_remote(struct task_struct *tsk, struct m
 
 #if (KERNEL_VERSION(4, 16, 0) > LINUX_VERSION_CODE)
 /* Null definition */
+#ifndef ALLOW_ERROR_INJECTION
 #define ALLOW_ERROR_INJECTION(fname, err_type)
+#endif
 #endif /* (KERNEL_VERSION(4, 16, 0) > LINUX_VERSION_CODE) */
 
 #if KERNEL_VERSION(6, 0, 0) > LINUX_VERSION_CODE

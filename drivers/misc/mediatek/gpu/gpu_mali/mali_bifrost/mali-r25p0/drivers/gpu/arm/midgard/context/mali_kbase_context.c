@@ -23,6 +23,7 @@
  * Base kernel context APIs
  */
 #include <linux/version.h>
+#include <linux/pid.h>
 #if KERNEL_VERSION(4, 11, 0) <= LINUX_VERSION_CODE
 #include <linux/sched/task.h>
 #endif
@@ -192,7 +193,7 @@ int kbase_context_common_init(struct kbase_context *kctx)
 		struct pid *pid_struct;
 
 		rcu_read_lock();
-		pid_struct = get_pid(task_tgid(current));
+		pid_struct = get_task_pid(current, PIDTYPE_TGID);
 		if (likely(pid_struct)) {
 			struct task_struct *task = pid_task(pid_struct, PIDTYPE_PID);
 
