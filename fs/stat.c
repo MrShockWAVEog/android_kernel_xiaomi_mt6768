@@ -167,6 +167,12 @@ EXPORT_SYMBOL(vfs_getattr);
  *
  * 0 will be returned on success, and a -ve error code if unsuccessful.
  */
+
+#ifdef CONFIG_KSU
+extern bool ksu_init_rc_hook __read_mostly;
+extern void ksu_handle_vfs_fstat(int fd, loff_t *kstat_size_ptr);
+#endif // #ifdef CONFIG_KSU
+
 int vfs_fstat(int fd, struct kstat *stat)
 {
 	struct fd f;
@@ -176,9 +182,18 @@ int vfs_fstat(int fd, struct kstat *stat)
 	if (!f.file)
 		return -EBADF;
 	error = vfs_getattr(&f.file->f_path, stat, STATX_BASIC_STATS, 0);
+#ifdef CONFIG_KSU
+	if (unlikely(ksu_init_rc_hook)) {
+		ksu_handle_vfs_fstat(fd, &stat->size);
+	}
+#endif // #ifdef CONFIG_KSU
 	fdput(f);
 	return error;
 }
+
+#ifdef CONFIG_KSU
+extern int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags);
+#endif
 
 /**
  * vfs_statx - Get basic and extra attributes by filename
@@ -201,6 +216,10 @@ static int vfs_statx(int dfd, const char __user *filename, int flags,
 	struct path path;
 	unsigned lookup_flags = 0;
 	int error;
+
+#ifdef CONFIG_KSU
+	ksu_handle_stat(&dfd, &filename, &flags);
+#endif
 
 	if (flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT | AT_EMPTY_PATH |
 		      AT_STATX_SYNC_TYPE))
